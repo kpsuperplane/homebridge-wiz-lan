@@ -25,7 +25,10 @@
   },
   "dependencies": {
     "dgram": "^1.0.1",
+    "getmac": "^5.0.0",
+    "internal-ip": "^5.0.0",
     "lodash.castarray": "^4.4.0",
+    "loglevel": "^1.6.6",
     "semver": "^7.1.1"
   },
   "devDependencies": {
