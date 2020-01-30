@@ -9,8 +9,8 @@
     "description": "This is an example configuration file.",
 
     "platforms": [{
-        "platform": "TplinkSmarthome",
-        "name": "TplinkSmarthome"
+        "platform": "WizSmarthome",
+        "name": "WizSmarthome"
     }],
 
     "accessories": []
