@@ -24,7 +24,7 @@
     "homebridge": ">=0.4.27"
   },
   "dependencies": {
-    "dgram": "^1.0.1",
+    "color-temperature": "^0.2.7",
     "getmac": "^5.0.0",
     "internal-ip": "^5.0.0",
     "lodash.castarray": "^4.4.0",
@@ -32,15 +32,12 @@
     "semver": "^7.1.1"
   },
   "devDependencies": {
-    "cspell": "^4.0.44",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-config-prettier": "^6.9.0",
     "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-prettier": "^3.1.2",
-    "prettier": "^1.19.1",
-    "standard-version": "^7.0.1",
-    "tplink-smarthome-simulator": "^1.10.0"
+    "prettier": "^1.19.1"
   },
   "main": "lib/index.js",
   "files": [
@@ -50,7 +47,6 @@
     "start": "homebridge --plugin-path .",
     "lint": "eslint --ignore-path .gitignore .",
     "postversion": "git push && git push --tags",
-    "release": "standard-version --sign",
     "cleancache": "rm -rf ~/.homebridge/persist && rm -rf ~/.homebridge/accessories"
   }
 }
