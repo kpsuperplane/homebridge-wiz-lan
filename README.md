@@ -25,12 +25,11 @@ The Wiz bulbs strongly distinguish between RGB color modes and Kelvin color mode
 
 Luckily, even if we only enable the color mode, we still get a nice temperature picker. Problem is, the color temperature is given in standard HSV. As such, this app will try to guess which one to best use given a color, and you will notice some significant brightness variance switching between a "temp" hue and a "color" hue.
 
+**In particular, since the Wiz bulbs only support up to 6500K, this means that only the top-ish half of the temperature picker is actually bright**
 ### Network Traffic
 The way Wiz bulbs work is by broadcoasting their current status every 5s or so. This works for the app, because you probably don't always have the app open.
 
 However, this plugin effictively simulates an always-open app. Therefore, if you have a lot of these bulbs, this plugin might actually take up a non-trivial amount of bandwidth in your LAN.
-
-**In particular, since the Wiz bulbs only support up to 6500K, this means that only the top-ish half of the temperature picker is actually bright**
 
 # Development
 
