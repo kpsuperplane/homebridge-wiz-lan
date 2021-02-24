@@ -1,52 +1,40 @@
 {
   "name": "homebridge-wiz-lan",
-  "version": "2.2.0",
-  "description": "Philips Wiz Lights plugin for Homebridge",
-  "author": "Kevin Pei",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/kpsuperplane/homebridge-wiz-lan.git"
-  },
-  "bugs": {
-    "url": "https://github.com/kpsuperplane/homebridge-wiz-lan/issues"
-  },
+  "version": "1.2.2",
+  "description": "A homebridge plugin to control Wiz Lights",
+  "main": "dist/index.js",
   "keywords": [
-    "homebridge-plugin",
-    "homebridge",
-    "philips",
-    "wiz",
-    "home",
-    "smartbulb"
-  ],
-  "engines": {
-    "node": ">=10",
-    "homebridge": ">=0.4.27"
-  },
-  "dependencies": {
-    "color-temperature": "^0.2.7",
-    "getmac": "^5.0.0",
-    "internal-ip": "^5.0.0",
-    "lodash.castarray": "^4.4.0",
-    "loglevel": "^1.6.6",
-    "semver": "^7.1.1"
-  },
-  "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-config-prettier": "^6.9.0",
-    "eslint-plugin-import": "^2.19.1",
-    "eslint-plugin-prettier": "^3.1.2",
-    "prettier": "^1.19.1"
-  },
-  "main": "lib/index.js",
-  "files": [
-    "lib"
+    "homebridge-plugin"
   ],
   "scripts": {
-    "start": "homebridge --plugin-path .",
-    "lint": "eslint --ignore-path .gitignore .",
-    "postversion": "git push && git push --tags",
-    "cleancache": "rm -rf ~/.homebridge/persist && rm -rf ~/.homebridge/accessories"
-  }
+    "clean": "rimraf ./dist",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run build",
+    "postpublish": "npm run clean",
+    "watch": "npm run build && npm link && nodemon",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=0.12.0",
+    "homebridge": ">=0.2.0"
+  },
+  "author": "Kevin Pei <hello@kevinpei.com>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kpsuperplane/homebridge-wizlan.git"
+  },
+  "devDependencies": {
+    "@types/jwt-decode": "^2.2.1",
+    "@types/node": "^14.14.6",
+    "homebridge": "^1.1.6",
+    "nodemon": "^2.0.6",
+    "rimraf": "^3.0.2",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5"
+  },
+  "bugs": {
+    "url": "https://github.com/kpsuperplane/homebridge-wizlan/issues"
+  },
+  "homepage": "https://github.com/kpsuperplane/homebridge-wizlan#readme"
 }
