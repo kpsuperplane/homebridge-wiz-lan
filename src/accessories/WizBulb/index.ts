@@ -1,4 +1,4 @@
-import {  PlatformAccessory } from "homebridge";
+import { PlatformAccessory } from "homebridge";
 import { WizAccessory } from "..";
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -48,7 +48,9 @@ const WizBulb: WizAccessory = {
     if (device.model.includes("SHTW") || device.model.includes("SHRGB")) {
       initTemperature(service, device, wiz);
     } else {
-      const charcteristic = service.getCharacteristic(Characteristic.ColorTemperature);
+      const charcteristic = service.getCharacteristic(
+        Characteristic.ColorTemperature
+      );
       if (typeof charcteristic !== "undefined") {
         service.removeCharacteristic(charcteristic);
       }
