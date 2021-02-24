@@ -32,21 +32,29 @@ const WizBulb: WizAccessory = {
     wiz: HomebridgeWizLan
   ) => {
     const { Characteristic, Service } = wiz;
+
+    // Setup the lightbulb service
     let service = accessory.getService(Service.Lightbulb);
     if (typeof service === "undefined") {
       service = new Service.Lightbulb(accessory.displayName);
       accessory.addService(service);
     }
+
+    // All bulbs support on/off + dimming
     initOnOff(service, device, wiz);
     initDimming(service, device, wiz);
+
+    // Those with these SHRGB/SHTW have color temp
     if (device.model.includes("SHTW") || device.model.includes("SHRGB")) {
       initTemperature(service, device, wiz);
-    }else {
+    } else {
       const charcteristic = service.getCharacteristic(Characteristic.ColorTemperature);
       if (typeof charcteristic !== "undefined") {
         service.removeCharacteristic(charcteristic);
       }
     }
+
+    // Those with SHRGB have RGB color!
     if (device.model.includes("SHRGB")) {
       initColor(service, device, wiz);
     } else {

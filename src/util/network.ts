@@ -164,4 +164,15 @@ export function sendDiscoveyBroadcast(service: HomebridgeWizLan) {
     BROADCAST_PORT,
     BROADCAST
   );
+
+  // Send discovery message to listed devices
+  if (Array.isArray(service.config.devices)) {
+    for (const device of service.config.devices) {
+      service.socket.send(
+        `{"method":"registration","params":{"phoneMac":"${MAC}","register":false,"phoneIp":"${ADDRESS}"}}`,
+        BROADCAST_PORT,
+        device.host
+      );
+    }
+  }
 }

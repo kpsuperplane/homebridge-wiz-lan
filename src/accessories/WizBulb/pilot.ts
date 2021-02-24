@@ -7,7 +7,7 @@ import {
   setPilot as _setPilot,
 } from "../../util/network";
 import {
-    clampRgb,
+  clampRgb,
   colorTemperature2rgb,
   kelvinToMired,
   rgb2colorTemperature,
