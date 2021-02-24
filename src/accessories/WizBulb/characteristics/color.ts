@@ -9,9 +9,7 @@ import {
   getPilot as _getPilot,
   setPilot as _setPilot,
 } from "../../../util/network";
-import {
-  hsvToColor,
-} from "../../../util/color";
+import { hsvToColor } from "../../../util/color";
 import {
   cachedPilot,
   getPilot,
@@ -46,6 +44,7 @@ function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
       }
     );
 }
+
 function initSaturation(
   service: WizService,
   device: Device,

@@ -28,6 +28,7 @@ export function initDimming(
         setPilot(
           wiz,
           device,
+          // for some reason < 10% is invalid, so we gotta fit it into 10% <-> 100%
           { dimming: Math.round((Math.max(1, Number(newValue)) + 10) / 1.1) },
           next
         );

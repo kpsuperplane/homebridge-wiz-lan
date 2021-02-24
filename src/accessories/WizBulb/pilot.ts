@@ -56,7 +56,7 @@ export function setPilot(
     state: oldPilot.state ?? false,
     dimming: oldPilot.dimming ?? 10,
     temp: oldPilot.temp,
-    r: oldPilot.temp,
+    r: oldPilot.r,
     g: oldPilot.g,
     b: oldPilot.b,
   };

@@ -143,7 +143,6 @@ export function registerDiscoveryHandler(
         if (ip in setPilotQueue) {
           const callbacks = setPilotQueue[ip];
           delete setPilotQueue[ip];
-          console.log(callbacks);
           callbacks.map(f => f(response.error ? new Error(response.error.toString()) : null));
         }
       }

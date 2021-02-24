@@ -141,6 +141,7 @@ export function rgbToHsv({ r, g, b }: RGB) {
 }
 
 export function hsvToColor(h: number, s: number, wiz: HomebridgeWizLan) {
+
   // First, convert to RGB
   const v = 1;
   let r = 0,
@@ -178,7 +179,7 @@ export function hsvToColor(h: number, s: number, wiz: HomebridgeWizLan) {
     g: Math.round(g * 255),
     b: Math.round(b * 255),
   };
-  
+
   // See if it might actually be a color temperature
   const h360 = h * 360;
   const s100 = s * 100;

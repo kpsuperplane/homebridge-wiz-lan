@@ -21,11 +21,6 @@ export default class HomebridgeWizLan {
   public readonly accessories: PlatformAccessory[] = [];
   public readonly socket: Socket;
 
-  token: string | null = null;
-  refreshToken = "";
-  authenticateRequest: Promise<string | void> | null = null;
-  unit: number = 0;
-
   constructor(
     public readonly log: Logger,
     public readonly config: Config,
