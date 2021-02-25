@@ -1,21 +1,56 @@
-# Usage
+# homebridge-wiz-lan
+Based off of kpsuperplane/homebridge-iotas
 
-**Currently only built to support RGB lights.**
+## Currently supports
+- Lightbulbs (RGB, Color Temp, and Single Color) (tested with Wiz 100W Color & Wiz 30W Filaments)
 
-Simply install this homebridge package with
-```
-npm install -g homebridge-wiz-lan
-```
-and add
-```
-{
+# Installation
+1. Install homebridge using: `npm install -g homebridge`
+2. Install this plugin using: `npm install -g homebridge-wiz-lan`
+3. Update your configuration file. See the sample below.
+
+# Configuration
+Simple Configuration:
+
+```javascript
+"platforms": [{
     "platform": "WizSmarthome",
-    "name": "WizSmarthome"
-}
+    "name": "WizSmarthome",
+}]
 ```
-to your `config.json`. 
 
-The bulbs on your local network should be autodetected and added to your homebridge
+Full configuration options:
+
+```javascript
+"platforms": [
+  {
+    "platform": "WizSmarthome",
+    "name": "Wiz",
+
+    // [Optional] Port for bulbs to connect to your server
+    // Default: 38900
+    "port": 38900,
+
+    // [Optional] UDP Broadcast address for bulb discovery
+    // Default: 255.255.255.255
+    "broadcast": "255.255.255.255",
+
+    // [Optional] Your server's IP address
+    // Default: Autodiscovered
+    "address": "192.168.0.1",
+
+    // [Optional] Manual list of IP addresses of bulbs
+    // Useful if UDP broadcast doesn't work for some reason
+    // Default: None
+    "devices": [
+      { "host": "192.168.0.2" },
+      { "host": "192.168.0.3" },
+      { "host": "192.168.0.4" },
+      // ...
+    ]
+  }
+]
+```
 
 ## Some Notes
 
@@ -32,10 +67,6 @@ The way Wiz bulbs work is by broadcoasting their current status every 5s or so. 
 However, this plugin effictively simulates an always-open app. Therefore, if you have a lot of these bulbs, this plugin might actually take up a non-trivial amount of bandwidth in your LAN.
 
 # Development
-
-Code based off of https://github.com/plasticrake/homebridge-tplink-smarthome#readme and https://github.com/plasticrake/tplink-smarthome-api
-
-
 Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1
 
 ## Contributing
@@ -49,7 +80,7 @@ Furthermore, feel free to create and modify it on your own per MIT License.
 Make a UDP broadcast to port 38899 with the following content:
 
 ```
-{"method":"registration","params":{"phoneMac":"<my_mac_address>","register":true,"phoneIp":"<my_ip_address>"}}
+{"method":"registration","params":{"phoneMac":"<my_mac_address>","register":false,"phoneIp":"<my_ip_address>"}}
 ```
 
 You will get a response on port 38900 with the following content:
@@ -58,12 +89,5 @@ You will get a response on port 38900 with the following content:
 {"method":"registration","env":"pro","result":{"mac":"<light_address>","success":true}}
 ```
 
-More importantly, you will begin to receive heartbeats with the following content:
-
-```
-// Kelvin Value
-{"method":"syncPilot","id":69,"env":"pro","params":{"mac":"<mac_address>","rssi":<some_number>,"src":"<something>","mqttCd":0,"state":true,"sceneId":<some_number>,"speed":100,"temp":2700,"dimming":100}}
-
-// RGB Value
-{"method":"syncPilot","id":69,"env":"pro","params":{"mac":"<mac_address>","rssi":<some_number>,"src":"<something>","mqttCd":0,"state":true,"sceneId":<some_number>,"speed":100,"r":255,"g":255,"b":255,"dimming":100}}
-```
+# License
+See LICENSE file
