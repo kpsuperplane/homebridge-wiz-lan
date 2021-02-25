@@ -1,2 +1,2 @@
-export const PLUGIN_NAME = "homebridge-wiz-lan";
-export const PLATFORM_NAME = "homebridge-wiz-lan";
+export const PLUGIN_NAME = "WizSmarthome";
+export const PLATFORM_NAME = "WizSmarthome";

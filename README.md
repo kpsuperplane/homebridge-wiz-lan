@@ -14,8 +14,8 @@ Simple Configuration:
 
 ```javascript
 "platforms": [{
-    "platform": "homebridge-wiz-lan",
-    "name": "Wiz",
+    "platform": "WizSmarthome",
+    "name": "WizSmarthome",
 }]
 ```
 
@@ -24,7 +24,7 @@ Full configuration options:
 ```javascript
 "platforms": [
   {
-    "platform": "homebridge-wiz-lan",
+    "platform": "WizSmarthome",
     "name": "Wiz",
 
     // [Optional] Port for bulbs to connect to your server
