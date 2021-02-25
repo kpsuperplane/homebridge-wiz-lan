@@ -1,4 +1,4 @@
-import { Service as WizService } from "homebridge";
+import { PlatformAccessory, Service as WizService } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -33,6 +33,10 @@ export interface Pilot {
 // to default values
 export const cachedPilot: { [mac: string]: Pilot } = {};
 
+export const disabledAdaptiveLightingCallback: {
+  [mac: string]: () => void;
+} = {};
+
 // Write a custom getPilot/setPilot that takes this
 // caching into account
 export function getPilot(
@@ -41,6 +45,17 @@ export function getPilot(
   callback: (pilot: Pilot) => void
 ) {
   return _getPilot<Pilot>(wiz, device, (pilot) => {
+    const old = cachedPilot[device.mac];
+    if (
+      typeof old !== "undefined" &&
+      (pilot.sceneId !== 0 ||
+        pilot.r !== old.r ||
+        pilot.g !== old.g ||
+        pilot.b !== old.b ||
+        pilot.temp !== old.temp)
+    ) {
+      disabledAdaptiveLightingCallback[device.mac]?.();
+    }
     cachedPilot[device.mac] = pilot;
     callback(pilot);
   });

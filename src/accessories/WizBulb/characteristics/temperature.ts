@@ -1,6 +1,7 @@
 import {
   CharacteristicSetCallback,
   CharacteristicValue,
+  PlatformAccessory,
   Service as WizService,
 } from "homebridge";
 import HomebridgeWizLan from "../../../wiz";

@@ -51,7 +51,7 @@ export function setPilot(wiz: HomebridgeWizLan, device: Device, pilot: object, c
   } else {
     setPilotQueue[device.ip] = [callback];
   }
-  wiz.log.debug(`[${device.ip}:${BROADCAST_PORT}][SetPilot] ${msg}`)
+  wiz.log.debug(`[SetPilot][${device.ip}:${BROADCAST_PORT}] ${msg}`)
   wiz.socket.send(msg, BROADCAST_PORT, device.ip);
 }
 

@@ -12,6 +12,7 @@ import {
   initTemperature,
   initColor,
 } from "./characteristics";
+import { initAdaptiveLighting } from "./AdaptiveLighting";
 
 const WizBulb: WizAccessory = {
   is: (device: Device) =>
@@ -47,6 +48,7 @@ const WizBulb: WizAccessory = {
     // Those with these SHRGB/SHTW have color temp
     if (device.model.includes("SHTW") || device.model.includes("SHRGB")) {
       initTemperature(service, device, wiz);
+      initAdaptiveLighting(wiz, service, accessory, device);
     } else {
       const charcteristic = service.getCharacteristic(
         Characteristic.ColorTemperature
