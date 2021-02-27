@@ -17,7 +17,7 @@ export function initAdaptiveLighting(
   const controller = new wiz.api.hap.AdaptiveLightingController(service, {
     controllerMode: wiz.api.hap.AdaptiveLightingControllerMode.AUTOMATIC,
   });
-  accessory.configureController(controller);
+  accessory.configureController(controller as any);
   disabledAdaptiveLightingCallback[device.mac] = () => {
     if (controller.isAdaptiveLightingActive()) {
       log.debug(`Disabling adaptive lighting for ${device.mac}`);
