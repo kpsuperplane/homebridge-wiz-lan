@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.1
+- [FEAT] Add a changelog
+- [FEAT] Add batching for getPilot queries which should reduce network traffic a bit
+- [FIX] Fix import issues from v2
+- [FIX] Prevent TW bulbs from magically becoming RGB bulbs
+
 ## 3.0.0
 
 - [FEAT] Support for RGB, Color Temp, and (Do I call them regular?) non-color-nor-temperature-adjustable bulbs
