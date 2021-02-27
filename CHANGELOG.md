@@ -1,0 +1,8 @@
+# Changelog
+
+## 3.0.0
+
+- [FEAT] Support for RGB, Color Temp, and (Do I call them regular?) non-color-nor-temperature-adjustable bulbs
+- [FEAT] Vastly lower network traffic - No longer relies on heartbeats
+- [FEAT] Full compatibility with latest version of homebridge 1.3.1
+- [FEAT] Improved documentation (for both users and developers)
