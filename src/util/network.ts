@@ -25,14 +25,21 @@ function getNetworkConfig({ config }: HomebridgeWizLan) {
   };
 }
 
-let getPilotQueue: {[key: string]: ((pilot: any) => void)[]} = {};
-export function getPilot<T>(wiz: HomebridgeWizLan, device: Device, callback: (pilot: T) => void) {
+let getPilotQueue: {[key: string]: ((error: Error | null, pilot: any) => void)[]} = {};
+export function getPilot<T>(wiz: HomebridgeWizLan, device: Device, callback: (error: Error | null, pilot: T) => void) {
   if (device.mac in getPilotQueue) {
     getPilotQueue[device.mac].push(callback);
   } else {
     getPilotQueue[device.mac] = [callback];
   }
-  wiz.socket.send(`{"method":"getPilot","params":{}}`, BROADCAST_PORT, device.ip);
+  wiz.socket.send(`{"method":"getPilot","params":{}}`, BROADCAST_PORT, device.ip, (error: Error | null) => {
+    if (error !== null && device.mac in getPilotQueue) {
+      wiz.log.debug(`[Socket] Failed to send getPilot response to ${device.mac}: ${error.toString()}`);
+      const callbacks = getPilotQueue[device.mac];
+      delete getPilotQueue[device.mac];
+      callbacks.map(f => f(error, null));
+    }
+  });
 }
 
 let setPilotQueue: {[key: string]: ((error: Error | null) => void)[]} = {};
@@ -136,7 +143,7 @@ export function registerDiscoveryHandler(
         if (mac in getPilotQueue) {
           const callbacks = getPilotQueue[mac];
           delete getPilotQueue[mac];
-          callbacks.map(f => f(response.result));
+          callbacks.map(f => f(null, response.result));
         }
       } else if (response.method === "setPilot") {
         const ip = rinfo.address;

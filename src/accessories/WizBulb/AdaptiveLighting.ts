@@ -1,5 +1,4 @@
-import { Characteristic, PlatformAccessory, Service } from "homebridge";
-import { on } from "process";
+import { PlatformAccessory, Service } from "homebridge";
 import { Device } from "../../types";
 import { makeLogger } from "../../util/logger";
 import HomebridgeWizLan from "../../wiz";
@@ -37,7 +36,12 @@ export function initAdaptiveLighting(
       `Checking if ${device.mac} changed before adaptive lighting update`
     );
     // get pilot will disable for us :)
-    getPilot(wiz, device, () => {});
+    getPilot(
+      wiz,
+      device,
+      () => {},
+      () => {}
+    );
   };
 
   temperature.on("set", () => {
