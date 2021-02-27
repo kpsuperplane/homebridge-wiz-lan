@@ -20,7 +20,12 @@ export function initOnOff(
   service
     .getCharacteristic(Characteristic.On)
     .on("get", (callback) =>
-      getPilot(wiz, device, (pilot) => callback(null, Number(pilot.state)))
+      getPilot(
+        wiz,
+        device,
+        (pilot) => callback(null, Number(pilot.state)),
+        callback
+      )
     )
     .on(
       "set",

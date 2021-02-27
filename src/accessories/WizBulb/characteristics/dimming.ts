@@ -20,7 +20,12 @@ export function initDimming(
   service
     .getCharacteristic(Characteristic.Brightness)
     .on("get", (callback) =>
-      getPilot(wiz, device, (pilot) => callback(null, Number(pilot.dimming)))
+      getPilot(
+        wiz,
+        device,
+        (pilot) => callback(null, Number(pilot.dimming)),
+        callback
+      )
     )
     .on(
       "set",

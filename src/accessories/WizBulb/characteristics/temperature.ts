@@ -22,8 +22,11 @@ export function initTemperature(
   service
     .getCharacteristic(Characteristic.ColorTemperature)
     .on("get", (callback) =>
-      getPilot(wiz, device, (pilot) =>
-        callback(null, kelvinToMired(pilotToColor(pilot).temp))
+      getPilot(
+        wiz,
+        device,
+        (pilot) => callback(null, kelvinToMired(pilotToColor(pilot).temp)),
+        callback
       )
     )
     .on(

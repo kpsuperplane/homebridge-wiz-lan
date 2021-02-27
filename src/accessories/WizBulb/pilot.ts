@@ -1,4 +1,4 @@
-import { PlatformAccessory, Service as WizService } from "homebridge";
+import { Service as WizService } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -43,9 +43,14 @@ export const disabledAdaptiveLightingCallback: {
 export function getPilot(
   wiz: HomebridgeWizLan,
   device: Device,
-  callback: (pilot: Pilot) => void
+  onSuccess: (pilot: Pilot) => void,
+  onError: (error: Error) => void
 ) {
-  return _getPilot<Pilot>(wiz, device, (pilot) => {
+  return _getPilot<Pilot>(wiz, device, (error, pilot) => {
+    if (error !== null) {
+      onError(error);
+      return;
+    }
     const old = cachedPilot[device.mac];
     if (
       typeof old !== "undefined" &&
@@ -58,9 +63,10 @@ export function getPilot(
       disabledAdaptiveLightingCallback[device.mac]?.();
     }
     cachedPilot[device.mac] = pilot;
-    callback(pilot);
+    onSuccess(pilot);
   });
 }
+
 export function setPilot(
   wiz: HomebridgeWizLan,
   device: Device,

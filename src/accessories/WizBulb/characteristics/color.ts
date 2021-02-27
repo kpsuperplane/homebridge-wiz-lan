@@ -23,7 +23,12 @@ function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
   service
     .getCharacteristic(Characteristic.Hue)
     .on("get", (callback) =>
-      getPilot(wiz, device, (pilot) => callback(null, pilotToColor(pilot).hue))
+      getPilot(
+        wiz,
+        device,
+        (pilot) => callback(null, pilotToColor(pilot).hue),
+        callback
+      )
     )
     .on(
       "set",
@@ -54,8 +59,11 @@ function initSaturation(
   service
     .getCharacteristic(Characteristic.Saturation)
     .on("get", (callback) =>
-      getPilot(wiz, device, (pilot) =>
-        callback(null, pilotToColor(pilot).saturation)
+      getPilot(
+        wiz,
+        device,
+        (pilot) => callback(null, pilotToColor(pilot).saturation),
+        callback
       )
     )
     .on(
