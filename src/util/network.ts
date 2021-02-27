@@ -32,6 +32,7 @@ export function getPilot<T>(wiz: HomebridgeWizLan, device: Device, callback: (er
   } else {
     getPilotQueue[device.mac] = [callback];
   }
+  wiz.log.debug(`[getPilot] Sending getPilot to ${device.mac}`);
   wiz.socket.send(`{"method":"getPilot","params":{}}`, BROADCAST_PORT, device.ip, (error: Error | null) => {
     if (error !== null && device.mac in getPilotQueue) {
       wiz.log.debug(`[Socket] Failed to send getPilot response to ${device.mac}: ${error.toString()}`);
@@ -59,7 +60,14 @@ export function setPilot(wiz: HomebridgeWizLan, device: Device, pilot: object, c
     setPilotQueue[device.ip] = [callback];
   }
   wiz.log.debug(`[SetPilot][${device.ip}:${BROADCAST_PORT}] ${msg}`)
-  wiz.socket.send(msg, BROADCAST_PORT, device.ip);
+  wiz.socket.send(msg, BROADCAST_PORT, device.ip, (error: Error | null) => {
+    if (error !== null && device.mac in setPilotQueue) {
+      wiz.log.debug(`[Socket] Failed to send setPilot response to ${device.mac}: ${error.toString()}`);
+      const callbacks = setPilotQueue[device.mac];
+      delete setPilotQueue[device.mac];
+      callbacks.map(f => f(error));
+    }
+  });
 }
 
 export function createSocket(wiz: HomebridgeWizLan) {
