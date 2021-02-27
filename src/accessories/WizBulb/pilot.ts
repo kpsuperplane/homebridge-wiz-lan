@@ -49,6 +49,7 @@ export function getPilot(
   return _getPilot<Pilot>(wiz, device, (error, pilot) => {
     if (error !== null) {
       onError(error);
+      return;
     }
     const old = cachedPilot[device.mac];
     if (

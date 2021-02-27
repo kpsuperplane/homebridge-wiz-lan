@@ -25,47 +25,97 @@ function getNetworkConfig({ config }: HomebridgeWizLan) {
   };
 }
 
-let getPilotQueue: {[key: string]: ((error: Error | null, pilot: any) => void)[]} = {};
-export function getPilot<T>(wiz: HomebridgeWizLan, device: Device, callback: (error: Error | null, pilot: T) => void) {
+const getPilotQueue: {
+  [key: string]: ((error: Error | null, pilot: any) => void)[];
+} = {};
+const getPilotDebounce: {
+  [key: string]: {
+    timeout: NodeJS.Timeout;
+    callbacks: ((error: Error | null, pilot: any) => void)[];
+  };
+} = {};
+export function getPilot<T>(
+  wiz: HomebridgeWizLan,
+  device: Device,
+  callback: (error: Error | null, pilot: T) => void
+) {
+  const timeout = setTimeout(() => {
+    const { callbacks } = getPilotDebounce[device.mac];
+    getPilotInternal(wiz, device, (error, pilot) => {
+      callbacks.map((cb) => cb(error, pilot));
+    });
+    delete getPilotDebounce[device.mac];
+  }, 50);
+  if (device.mac in getPilotDebounce) {
+    clearTimeout(getPilotDebounce[device.mac].timeout);
+  }
+  getPilotDebounce[device.mac] = {
+    timeout,
+    callbacks: [callback, ...(getPilotDebounce[device.mac]?.callbacks ?? [])],
+  };
+}
+function getPilotInternal<T>(
+  wiz: HomebridgeWizLan,
+  device: Device,
+  callback: (error: Error | null, pilot: T) => void
+) {
   if (device.mac in getPilotQueue) {
     getPilotQueue[device.mac].push(callback);
   } else {
     getPilotQueue[device.mac] = [callback];
   }
   wiz.log.debug(`[getPilot] Sending getPilot to ${device.mac}`);
-  wiz.socket.send(`{"method":"getPilot","params":{}}`, BROADCAST_PORT, device.ip, (error: Error | null) => {
-    if (error !== null && device.mac in getPilotQueue) {
-      wiz.log.debug(`[Socket] Failed to send getPilot response to ${device.mac}: ${error.toString()}`);
-      const callbacks = getPilotQueue[device.mac];
-      delete getPilotQueue[device.mac];
-      callbacks.map(f => f(error, null));
+  wiz.socket.send(
+    `{"method":"getPilot","params":{}}`,
+    BROADCAST_PORT,
+    device.ip,
+    (error: Error | null) => {
+      if (error !== null && device.mac in getPilotQueue) {
+        wiz.log.debug(
+          `[Socket] Failed to send getPilot response to ${
+            device.mac
+          }: ${error.toString()}`
+        );
+        const callbacks = getPilotQueue[device.mac];
+        delete getPilotQueue[device.mac];
+        callbacks.map((f) => f(error, null));
+      }
     }
-  });
+  );
 }
 
-let setPilotQueue: {[key: string]: ((error: Error | null) => void)[]} = {};
-export function setPilot(wiz: HomebridgeWizLan, device: Device, pilot: object, callback: (error: Error | null) => void) {
+const setPilotQueue: { [key: string]: ((error: Error | null) => void)[] } = {};
+export function setPilot(
+  wiz: HomebridgeWizLan,
+  device: Device,
+  pilot: object,
+  callback: (error: Error | null) => void
+) {
   const msg = JSON.stringify({
-    method: 'setPilot',
-    env: 'pro',
+    method: "setPilot",
+    env: "pro",
     params: {
       mac: device.mac,
-      src: 'udp',
-      ...pilot
-    }
+      src: "udp",
+      ...pilot,
+    },
   });
   if (device.ip in setPilotQueue) {
     setPilotQueue[device.ip].push(callback);
   } else {
     setPilotQueue[device.ip] = [callback];
   }
-  wiz.log.debug(`[SetPilot][${device.ip}:${BROADCAST_PORT}] ${msg}`)
+  wiz.log.debug(`[SetPilot][${device.ip}:${BROADCAST_PORT}] ${msg}`);
   wiz.socket.send(msg, BROADCAST_PORT, device.ip, (error: Error | null) => {
     if (error !== null && device.mac in setPilotQueue) {
-      wiz.log.debug(`[Socket] Failed to send setPilot response to ${device.mac}: ${error.toString()}`);
+      wiz.log.debug(
+        `[Socket] Failed to send setPilot response to ${
+          device.mac
+        }: ${error.toString()}`
+      );
       const callbacks = setPilotQueue[device.mac];
       delete setPilotQueue[device.mac];
-      callbacks.map(f => f(error));
+      callbacks.map((f) => f(error));
     }
   });
 }
@@ -151,14 +201,16 @@ export function registerDiscoveryHandler(
         if (mac in getPilotQueue) {
           const callbacks = getPilotQueue[mac];
           delete getPilotQueue[mac];
-          callbacks.map(f => f(null, response.result));
+          callbacks.map((f) => f(null, response.result));
         }
       } else if (response.method === "setPilot") {
         const ip = rinfo.address;
         if (ip in setPilotQueue) {
           const callbacks = setPilotQueue[ip];
           delete setPilotQueue[ip];
-          callbacks.map(f => f(response.error ? new Error(response.error.toString()) : null));
+          callbacks.map((f) =>
+            f(response.error ? new Error(response.error.toString()) : null)
+          );
         }
       }
     });
