@@ -19,7 +19,7 @@ export default class HomebridgeWizLan {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public readonly initializedAccessories = new Set<PlatformAccessory>();
+  public readonly initializedAccessories = new Set<string>();
   public readonly socket: Socket;
 
   constructor(
@@ -46,7 +46,7 @@ export default class HomebridgeWizLan {
   initAccessory(platformAccessory: PlatformAccessory) {
 
     // Already initialized!!
-    if (this.initializedAccessories.has(platformAccessory)) {
+    if (this.initializedAccessories.has(platformAccessory.UUID)) {
       return;
     }
 
@@ -72,7 +72,7 @@ export default class HomebridgeWizLan {
 
     accessory.init(platformAccessory, device, this);
 
-    this.initializedAccessories.add(platformAccessory);
+    this.initializedAccessories.add(platformAccessory.UUID);
   }
 
   /**
