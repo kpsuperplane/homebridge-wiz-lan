@@ -11,6 +11,7 @@ import { PLATFORM_NAME, PLUGIN_NAME } from "./constants";
 import { Config, Device } from "./types";
 import Accessories from './accessories';
 import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveyBroadcast } from "./util/network";
+import { platform } from "os";
 
 export default class HomebridgeWizLan {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -19,6 +20,7 @@ export default class HomebridgeWizLan {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
+  public readonly initializedAccessories = new Set<PlatformAccessory>();
   public readonly socket: Socket;
 
   constructor(
@@ -43,7 +45,18 @@ export default class HomebridgeWizLan {
   }
 
   initAccessory(platformAccessory: PlatformAccessory) {
+
+    // Already initialized!!
+    if (this.initializedAccessories.has(platformAccessory)) {
+      return;
+    }
+
     const device = platformAccessory.context as Device;
+
+    // Skip if it doesn't have the new context schema
+    if (typeof device?.model !== "string") {
+      return;
+    }
 
     platformAccessory
       .getService(this.Service.AccessoryInformation)!!
@@ -60,6 +73,7 @@ export default class HomebridgeWizLan {
 
     accessory.init(platformAccessory, device, this);
 
+    this.initializedAccessories.add(platformAccessory);
   }
 
   /**
@@ -111,6 +125,9 @@ export default class HomebridgeWizLan {
       existingAccessory.context = device;
       this.log.info("Updating accessory:", name);
       this.api.updatePlatformAccessories([existingAccessory]);
+      // try initializing again in case it didn't the last time 
+      // (e.g. platform upgrade)
+      this.initAccessory(existingAccessory);
     }
   }
 }
