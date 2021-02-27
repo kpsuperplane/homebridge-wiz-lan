@@ -11,7 +11,6 @@ import { PLATFORM_NAME, PLUGIN_NAME } from "./constants";
 import { Config, Device } from "./types";
 import Accessories from './accessories';
 import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveyBroadcast } from "./util/network";
-import { platform } from "os";
 
 export default class HomebridgeWizLan {
   public readonly Service: typeof Service = this.api.hap.Service;
