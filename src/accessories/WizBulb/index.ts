@@ -13,6 +13,7 @@ import {
   initColor,
 } from "./characteristics";
 import { initAdaptiveLighting } from "./AdaptiveLighting";
+import { isRGB, isTW } from "./util";
 
 const WizBulb: WizAccessory = {
   is: (device: Device) =>
@@ -46,7 +47,7 @@ const WizBulb: WizAccessory = {
     initDimming(service, device, wiz);
 
     // Those with these SHRGB/SHTW have color temp
-    if (device.model.includes("SHTW") || device.model.includes("SHRGB")) {
+    if (isRGB(device) || isTW(device)) {
       initTemperature(service, device, wiz);
       initAdaptiveLighting(wiz, service, accessory, device);
     } else {
@@ -59,7 +60,7 @@ const WizBulb: WizAccessory = {
     }
 
     // Those with SHRGB have RGB color!
-    if (device.model.includes("SHRGB")) {
+    if (isRGB(device)) {
       initColor(service, device, wiz);
     } else {
       const hue = service.getCharacteristic(Characteristic.Hue);

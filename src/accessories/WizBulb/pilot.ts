@@ -13,6 +13,7 @@ import {
   rgb2colorTemperature,
   rgbToHsv,
 } from "../../util/color";
+import { isRGB, isTW } from "./util";
 
 export interface Pilot {
   mac: string;
@@ -111,15 +112,21 @@ export function updateColorTemp(
   next: (error: Error | null) => void
 ) {
   return (error: Error | null) => {
-    if (error === null) {
-      const color = pilotToColor(cachedPilot[device.mac]);
-      service
-        .getCharacteristic(wiz.Characteristic.ColorTemperature)
-        .updateValue(kelvinToMired(color.temp));
-      service
-        .getCharacteristic(wiz.Characteristic.Saturation)
-        .updateValue(color.saturation);
-      service.getCharacteristic(wiz.Characteristic.Hue).updateValue(color.hue);
+    if (isTW(device)) {
+      if (error === null) {
+        const color = pilotToColor(cachedPilot[device.mac]);
+        service
+          .getCharacteristic(wiz.Characteristic.ColorTemperature)
+          .updateValue(kelvinToMired(color.temp));
+        if (isRGB(device)) {
+          service
+            .getCharacteristic(wiz.Characteristic.Saturation)
+            .updateValue(color.saturation);
+          service
+            .getCharacteristic(wiz.Characteristic.Hue)
+            .updateValue(color.hue);
+        }
+      }
     }
     next(error);
   };
