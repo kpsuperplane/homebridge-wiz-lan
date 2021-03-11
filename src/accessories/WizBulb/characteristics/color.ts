@@ -13,11 +13,15 @@ import { hsvToColor } from "../../../util/color";
 import {
   cachedPilot,
   getPilot,
+  Pilot,
   pilotToColor,
   setPilot,
   updateColorTemp,
 } from "../pilot";
 
+export function transformHue(pilot: Pilot) {
+  return pilotToColor(pilot).hue;
+}
 function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
   const { Characteristic } = wiz;
   service
@@ -25,8 +29,9 @@ function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
     .on("get", (callback) =>
       getPilot(
         wiz,
+        service,
         device,
-        (pilot) => callback(null, pilotToColor(pilot).hue),
+        (pilot) => callback(null, transformHue(pilot)),
         callback
       )
     )
@@ -50,6 +55,9 @@ function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
     );
 }
 
+export function transformSaturation(pilot: Pilot) {
+  return pilotToColor(pilot).saturation;
+}
 function initSaturation(
   service: WizService,
   device: Device,
@@ -61,8 +69,9 @@ function initSaturation(
     .on("get", (callback) =>
       getPilot(
         wiz,
+        service,
         device,
-        (pilot) => callback(null, pilotToColor(pilot).saturation),
+        (pilot) => callback(null, transformSaturation(pilot)),
         callback
       )
     )

@@ -9,8 +9,11 @@ import {
   getPilot as _getPilot,
   setPilot as _setPilot,
 } from "../../../util/network";
-import { getPilot, setPilot } from "../pilot";
+import { getPilot, Pilot, setPilot } from "../pilot";
 
+export function transformDimming(pilot: Pilot) {
+  return Number(pilot.dimming);
+}
 export function initDimming(
   service: WizService,
   device: Device,
@@ -22,8 +25,9 @@ export function initDimming(
     .on("get", (callback) =>
       getPilot(
         wiz,
+        service,
         device,
-        (pilot) => callback(null, Number(pilot.dimming)),
+        (pilot) => callback(null, transformDimming(pilot)),
         callback
       )
     )

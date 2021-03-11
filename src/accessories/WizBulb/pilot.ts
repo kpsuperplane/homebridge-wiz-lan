@@ -1,4 +1,4 @@
-import { Service as WizService } from "homebridge";
+import { Characteristic, Service, Service as WizService } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -14,6 +14,14 @@ import {
   rgbToHsv,
 } from "../../util/color";
 import { isRGB, isTW } from "./util";
+import {
+  transformDimming,
+  transformHue,
+  transformOnOff,
+  transformSaturation,
+  transformTemperature,
+} from "./characteristics";
+import { HAPStatus, HapStatusError } from "hap-nodejs";
 
 export interface Pilot {
   mac: string;
@@ -38,19 +46,58 @@ export const disabledAdaptiveLightingCallback: {
   [mac: string]: () => void;
 } = {};
 
+function updatePilot(
+  wiz: HomebridgeWizLan,
+  service: Service,
+  device: Device,
+  pilot: Pilot | Error
+) {
+  service
+    .getCharacteristic(wiz.Characteristic.On)
+    .updateValue(pilot instanceof Error ? pilot : transformOnOff(pilot));
+  service
+    .getCharacteristic(wiz.Characteristic.Brightness)
+    .updateValue(pilot instanceof Error ? pilot : transformDimming(pilot));
+  if (isTW(device) || isRGB(device)) {
+    service
+      .getCharacteristic(wiz.Characteristic.ColorTemperature)
+      .updateValue(
+        pilot instanceof Error ? pilot : transformTemperature(pilot)
+      );
+  }
+  if (isRGB(device)) {
+    service
+      .getCharacteristic(wiz.Characteristic.Hue)
+      .updateValue(pilot instanceof Error ? pilot : transformHue(pilot));
+    service
+      .getCharacteristic(wiz.Characteristic.Saturation)
+      .updateValue(pilot instanceof Error ? pilot : transformSaturation(pilot));
+  }
+}
+
 // Write a custom getPilot/setPilot that takes this
 // caching into account
 export function getPilot(
   wiz: HomebridgeWizLan,
+  service: Service,
   device: Device,
   onSuccess: (pilot: Pilot) => void,
   onError: (error: Error) => void
 ) {
-  return _getPilot<Pilot>(wiz, device, (error, pilot) => {
+  let callbacked = false;
+  const onDone = (error: Error | null, pilot: Pilot) => {
+    const shouldCallback = !callbacked;
+    callbacked = true;
     if (error !== null) {
-      onError(error);
+      if (shouldCallback) {
+        onError(error);
+      } else {
+        service.getCharacteristic(wiz.Characteristic.On).updateValue(error);
+      }
+      delete cachedPilot[device.mac];
       return;
     }
+
     const old = cachedPilot[device.mac];
     if (
       typeof old !== "undefined" &&
@@ -63,7 +110,22 @@ export function getPilot(
       disabledAdaptiveLightingCallback[device.mac]?.();
     }
     cachedPilot[device.mac] = pilot;
-    onSuccess(pilot);
+    if (shouldCallback) {
+      onSuccess(pilot);
+    } else {
+      updatePilot(wiz, service, device, pilot);
+    }
+  };
+  const timeout = setTimeout(() => {
+    if (device.mac in cachedPilot) {
+      onDone(null, cachedPilot[device.mac]);
+    } else {
+      onDone(new Error("No response within 1s"), undefined as any);
+    }
+  }, 1000);
+  _getPilot<Pilot>(wiz, device, (error, pilot) => {
+    clearTimeout(timeout);
+    onDone(error, pilot);
   });
 }
 
