@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.2
+- [FIX] Add instant response for bulbs, will now return last-known value if bulbs take more than 1 second to respond.
+
 ## 3.0.1
 - [FEAT] Add a changelog
 - [FEAT] Add batching for getPilot queries which should reduce network traffic a bit

@@ -9,8 +9,11 @@ import {
   getPilot as _getPilot,
   setPilot as _setPilot,
 } from "../../../util/network";
-import { getPilot, setPilot } from "../pilot";
+import { getPilot, Pilot, setPilot } from "../pilot";
 
+export function transformOnOff(pilot: Pilot) {
+  return Number(pilot.state);
+}
 export function initOnOff(
   service: WizService,
   device: Device,
@@ -22,8 +25,9 @@ export function initOnOff(
     .on("get", (callback) =>
       getPilot(
         wiz,
+        service,
         device,
-        (pilot) => callback(null, Number(pilot.state)),
+        (pilot) => callback(null, transformOnOff(pilot)),
         callback
       )
     )

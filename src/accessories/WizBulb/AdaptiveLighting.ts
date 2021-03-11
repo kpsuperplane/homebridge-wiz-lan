@@ -38,6 +38,7 @@ export function initAdaptiveLighting(
     // get pilot will disable for us :)
     getPilot(
       wiz,
+      service,
       device,
       () => {},
       () => {}

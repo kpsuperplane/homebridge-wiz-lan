@@ -11,8 +11,11 @@ import {
   setPilot as _setPilot,
 } from "../../../util/network";
 import { kelvinToMired, miredToKelvin } from "../../../util/color";
-import { getPilot, pilotToColor, setPilot, updateColorTemp } from "../pilot";
+import { getPilot, Pilot, pilotToColor, setPilot, updateColorTemp } from "../pilot";
 
+export function transformTemperature(pilot: Pilot) {
+  return kelvinToMired(pilotToColor(pilot).temp);
+}
 export function initTemperature(
   service: WizService,
   device: Device,
@@ -24,8 +27,9 @@ export function initTemperature(
     .on("get", (callback) =>
       getPilot(
         wiz,
+        service,
         device,
-        (pilot) => callback(null, kelvinToMired(pilotToColor(pilot).temp)),
+        (pilot) => callback(null, transformTemperature(pilot)),
         callback
       )
     )
