@@ -136,6 +136,9 @@ export function setPilot(
   callback: (error: Error | null) => void
 ) {
   const oldPilot = cachedPilot[device.mac];
+  if (typeof oldPilot == "undefined") {
+    return;
+  }
   const oldPilotValues = {
     state: oldPilot.state ?? false,
     dimming: oldPilot.dimming ?? 10,
