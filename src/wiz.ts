@@ -10,7 +10,7 @@ import {
 import { PLATFORM_NAME, PLUGIN_NAME } from "./constants";
 import { Config, Device } from "./types";
 import Accessories from './accessories';
-import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveyBroadcast } from "./util/network";
+import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveryBroadcast } from "./util/network";
 
 export default class HomebridgeWizLan {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -38,7 +38,7 @@ export default class HomebridgeWizLan {
       // run the method to discover / register your devices as accessories
       bindSocket(this, () => {
         registerDiscoveryHandler(this, this.tryAddDevice.bind(this));
-        sendDiscoveyBroadcast(this);
+        sendDiscoveryBroadcast(this);
       });
     });
   }
@@ -98,11 +98,28 @@ export default class HomebridgeWizLan {
     } 
 
     const uuid = this.api.hap.uuid.generate(device.mac);
-    const name = `Wiz ${accessory.getName(device)} ${device.mac}`;
+    const defaultName = `Wiz ${accessory.getName(device)} ${device.mac}`;
+    let name = defaultName
 
     const existingAccessory = this.accessories.find(
       (accessory) => accessory.UUID === uuid
     );
+
+    this.log.debug(`Considering alternative names in ${JSON.stringify(this.config.devices)} from ${JSON.stringify(this.config)}...`);
+    if (Array.isArray(this.config.devices)) {
+      this.log.debug(`Found some configs...`);
+      for (const configDevice of this.config.devices) {
+        this.log.debug(`Pondering ${JSON.stringify(configDevice)} versus ${JSON.stringify(device)}...`);
+        if ((configDevice.mac && device.mac == configDevice.mac) ||
+            (configDevice.host && device.ip == configDevice.host)) {
+          this.log.debug(`Found a match...`);
+          if (configDevice.name) {
+            this.log.debug(`Changing name to ${configDevice.name}...`);
+            name = configDevice.name;
+          }
+        }
+      }
+    }
 
     // check the accessory was not restored from cache
     if (!existingAccessory) {
@@ -122,7 +139,8 @@ export default class HomebridgeWizLan {
       ]);
     } else {
       existingAccessory.context = device;
-      this.log.info("Updating accessory:", name);
+      this.log.info(`Updating accessory: ${name}${name == existingAccessory.displayName ? "" : ` [formerly ${existingAccessory.displayName}]`}`);
+      existingAccessory.displayName = name;
       this.api.updatePlatformAccessories([existingAccessory]);
       // try initializing again in case it didn't the last time 
       // (e.g. platform upgrade)

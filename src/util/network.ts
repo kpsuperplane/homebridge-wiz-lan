@@ -219,7 +219,7 @@ export function registerDiscoveryHandler(
   }
 }
 
-export function sendDiscoveyBroadcast(service: HomebridgeWizLan) {
+export function sendDiscoveryBroadcast(service: HomebridgeWizLan) {
   const { ADDRESS, MAC, BROADCAST } = getNetworkConfig(service);
 
   const log = makeLogger(service, "Discovery");
@@ -235,11 +235,13 @@ export function sendDiscoveyBroadcast(service: HomebridgeWizLan) {
   // Send discovery message to listed devices
   if (Array.isArray(service.config.devices)) {
     for (const device of service.config.devices) {
-      service.socket.send(
-        `{"method":"registration","params":{"phoneMac":"${MAC}","register":false,"phoneIp":"${ADDRESS}"}}`,
-        BROADCAST_PORT,
-        device.host
-      );
+      if (device.host) {
+        service.socket.send(
+          `{"method":"registration","params":{"phoneMac":"${MAC}","register":false,"phoneIp":"${ADDRESS}"}}`,
+          BROADCAST_PORT,
+          device.host
+        );
+      }
     }
   }
 }
