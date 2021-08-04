@@ -13,17 +13,16 @@ Based off of kpsuperplane/homebridge-iotas
 Simple Configuration:
 
 ```javascript
-"platforms": [{
+{
     "platform": "WizSmarthome",
     "name": "WizSmarthome",
-}]
+}
 ```
 
 Full configuration options:
 
 ```javascript
-"platforms": [
-  {
+{
     "platform": "WizSmarthome",
     "name": "Wiz",
 
@@ -49,7 +48,6 @@ Full configuration options:
       // ...
     ]
   }
-]
 ```
 
 ## Some Notes
