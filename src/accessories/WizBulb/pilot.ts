@@ -13,7 +13,7 @@ import {
   rgb2colorTemperature,
   rgbToHsv,
 } from "../../util/color";
-import { isRGB, isTW } from "./util";
+import { isRGB, isTW, turnOffIfNeeded } from "./util";
 import {
   transformDimming,
   transformHue,
@@ -22,13 +22,17 @@ import {
   transformTemperature,
 } from "./characteristics";
 import { HAPStatus, HapStatusError } from "hap-nodejs";
+import {
+  transformEffectActive,
+  transformEffectId,
+} from "./characteristics/scenes";
 
 export interface Pilot {
   mac: string;
   rssi: number;
   src: string;
   state: boolean;
-  sceneId: number;
+  sceneId?: number;
   temp?: number;
   dimming: number;
   r?: number;
@@ -62,11 +66,29 @@ function updatePilot(
     .getCharacteristic(wiz.Characteristic.Brightness)
     .updateValue(pilot instanceof Error ? pilot : transformDimming(pilot));
   if (isTW(device) || isRGB(device)) {
-    service
-      .getCharacteristic(wiz.Characteristic.ColorTemperature)
+    let useCT = true;
+    if (!(pilot instanceof Error) && pilot.sceneId && pilot.sceneId > 0) {
+      useCT = false;
+    }
+
+    const scenesService = accessory.getService(Service.Television)!;
+
+    scenesService
+      .getCharacteristic(wiz.Characteristic.Active)
       .updateValue(
-        pilot instanceof Error ? pilot : transformTemperature(pilot)
+        pilot instanceof Error ? pilot : transformEffectActive(pilot)
       );
+    scenesService!
+      .getCharacteristic(wiz.Characteristic.ActiveIdentifier)
+      .updateValue(pilot instanceof Error ? pilot : transformEffectId(pilot));
+
+    if (useCT) {
+      service
+        .getCharacteristic(wiz.Characteristic.ColorTemperature)
+        .updateValue(
+          pilot instanceof Error ? pilot : transformTemperature(pilot)
+        );
+    }
   }
   if (isRGB(device)) {
     service
@@ -152,13 +174,31 @@ export function setPilot(
     r: oldPilot.r,
     g: oldPilot.g,
     b: oldPilot.b,
+    sceneId: oldPilot.sceneId,
   };
-  const newPilot = {
+  let newPilot = {
     ...oldPilotValues,
     ...pilot,
   };
-  cachedPilot[device.mac] = { ...oldPilot, ...newPilot };
-  return _setPilot(wiz, device, newPilot, (error) => {
+
+  if (pilot.r || pilot.g || pilot.b || pilot.temp) {
+    newPilot = { ...newPilot, sceneId: undefined };
+  }
+  if (newPilot.sceneId !== 0) {
+    newPilot = {
+      ...newPilot,
+      temp: undefined,
+      r: undefined,
+      g: undefined,
+      b: undefined,
+    };
+  }
+
+  cachedPilot[device.mac] = {
+    ...oldPilot,
+    ...newPilot,
+  } as any;
+  return _setPilot(wiz, device, newPilot, error => {
     if (error !== null) {
       cachedPilot[device.mac] = oldPilot;
     }
@@ -190,6 +230,7 @@ export function updateColorTemp(
 ) {
   const { Service } = wiz;
   const service = accessory.getService(Service.Lightbulb)!;
+  const scenesService = accessory.getService(Service.Television)!;
   return (error: Error | null) => {
     if (isTW(device) || isRGB(device)) {
       if (error === null) {
@@ -205,6 +246,8 @@ export function updateColorTemp(
             .getCharacteristic(wiz.Characteristic.Hue)
             .updateValue(color.hue);
         }
+
+        turnOffIfNeeded(wiz.Characteristic.Active, scenesService, true);
       }
     }
     next(error);

@@ -14,6 +14,7 @@ import {
 } from "./characteristics";
 import { initAdaptiveLighting } from "./AdaptiveLighting";
 import { isRGB, isTW } from "./util";
+import { initScenes } from "./characteristics/scenes";
 
 const WizBulb: WizAccessory = {
   is: (device: Device) =>
@@ -72,6 +73,8 @@ const WizBulb: WizAccessory = {
         service.removeCharacteristic(saturation);
       }
     }
+
+    initScenes(wiz, accessory, device);
   },
 };
 
