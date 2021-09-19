@@ -17,17 +17,18 @@ export function transformTemperature(pilot: Pilot) {
   return kelvinToMired(pilotToColor(pilot).temp);
 }
 export function initTemperature(
-  service: WizService,
+  accessory: PlatformAccessory,
   device: Device,
   wiz: HomebridgeWizLan
 ) {
-  const { Characteristic } = wiz;
+  const { Characteristic, Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   service
     .getCharacteristic(Characteristic.ColorTemperature)
     .on("get", (callback) =>
       getPilot(
         wiz,
-        service,
+        accessory,
         device,
         (pilot) => callback(null, transformTemperature(pilot)),
         callback
@@ -38,6 +39,7 @@ export function initTemperature(
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         setPilot(
           wiz,
+          accessory,
           device,
           {
             temp: miredToKelvin(Number(newValue)),
@@ -45,7 +47,7 @@ export function initTemperature(
             g: undefined,
             b: undefined,
           },
-          updateColorTemp(device, service, wiz, next)
+          updateColorTemp(device, accessory, wiz, next)
         );
       }
     );

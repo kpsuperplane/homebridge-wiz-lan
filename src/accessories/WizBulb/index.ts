@@ -43,12 +43,12 @@ const WizBulb: WizAccessory = {
     }
 
     // All bulbs support on/off + dimming
-    initOnOff(service, device, wiz);
-    initDimming(service, device, wiz);
+    initOnOff(accessory, device, wiz);
+    initDimming(accessory, device, wiz);
 
     // Those with these SHRGB/SHTW have color temp
     if (isRGB(device) || isTW(device)) {
-      initTemperature(service, device, wiz);
+      initTemperature(accessory, device, wiz);
       initAdaptiveLighting(wiz, service, accessory, device);
     } else {
       const charcteristic = service.getCharacteristic(
@@ -61,7 +61,7 @@ const WizBulb: WizAccessory = {
 
     // Those with SHRGB have RGB color!
     if (isRGB(device)) {
-      initColor(service, device, wiz);
+      initColor(accessory, device, wiz);
     } else {
       const hue = service.getCharacteristic(Characteristic.Hue);
       if (typeof hue !== "undefined") {

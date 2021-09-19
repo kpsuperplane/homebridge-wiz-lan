@@ -1,4 +1,4 @@
-import { Characteristic, Service, Service as WizService } from "homebridge";
+import { PlatformAccessory, Service, Service as WizService } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -48,10 +48,13 @@ export const disabledAdaptiveLightingCallback: {
 
 function updatePilot(
   wiz: HomebridgeWizLan,
-  service: Service,
+  accessory: PlatformAccessory,
   device: Device,
   pilot: Pilot | Error
 ) {
+  const { Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
+
   service
     .getCharacteristic(wiz.Characteristic.On)
     .updateValue(pilot instanceof Error ? pilot : transformOnOff(pilot));
@@ -79,11 +82,13 @@ function updatePilot(
 // caching into account
 export function getPilot(
   wiz: HomebridgeWizLan,
-  service: Service,
+  accessory: PlatformAccessory,
   device: Device,
   onSuccess: (pilot: Pilot) => void,
   onError: (error: Error) => void
 ) {
+  const { Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   let callbacked = false;
   const onDone = (error: Error | null, pilot: Pilot) => {
     const shouldCallback = !callbacked;
@@ -113,7 +118,7 @@ export function getPilot(
     if (shouldCallback) {
       onSuccess(pilot);
     } else {
-      updatePilot(wiz, service, device, pilot);
+      updatePilot(wiz, accessory, device, pilot);
     }
   };
   const timeout = setTimeout(() => {
@@ -131,6 +136,7 @@ export function getPilot(
 
 export function setPilot(
   wiz: HomebridgeWizLan,
+  accessory: PlatformAccessory,
   device: Device,
   pilot: Partial<Pilot>,
   callback: (error: Error | null) => void
@@ -178,10 +184,12 @@ export function pilotToColor(pilot: Pilot) {
 // Need to update hue, saturation, and temp when ANY of these change
 export function updateColorTemp(
   device: Device,
-  service: WizService,
+  accessory: PlatformAccessory,
   wiz: HomebridgeWizLan,
   next: (error: Error | null) => void
 ) {
+  const { Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   return (error: Error | null) => {
     if (isTW(device)) {
       if (error === null) {

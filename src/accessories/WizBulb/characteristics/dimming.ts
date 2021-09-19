@@ -1,6 +1,7 @@
 import {
   CharacteristicSetCallback,
   CharacteristicValue,
+  PlatformAccessory,
   Service as WizService,
 } from "homebridge";
 import HomebridgeWizLan from "../../../wiz";
@@ -15,17 +16,18 @@ export function transformDimming(pilot: Pilot) {
   return Number(Math.round((Math.max(10, Number(pilot.dimming)) - 100) * 1.1 + 100));
 }
 export function initDimming(
-  service: WizService,
+  accessory: PlatformAccessory,
   device: Device,
   wiz: HomebridgeWizLan
 ) {
-  const { Characteristic } = wiz;
+  const { Characteristic, Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   service
     .getCharacteristic(Characteristic.Brightness)
     .on("get", (callback) =>
       getPilot(
         wiz,
-        service,
+        accessory,
         device,
         (pilot) => callback(null, transformDimming(pilot)),
         callback
@@ -36,6 +38,7 @@ export function initDimming(
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         setPilot(
           wiz,
+          accessory,
           device,
           // for some reason < 10% is invalid, so we gotta fit it into 10% <-> 100%
           { dimming: Math.round((Math.max(1, Number(newValue)) + 10) / 1.1) },
