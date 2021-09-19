@@ -191,7 +191,7 @@ export function updateColorTemp(
   const { Service } = wiz;
   const service = accessory.getService(Service.Lightbulb)!;
   return (error: Error | null) => {
-    if (isTW(device)) {
+    if (isTW(device) || isRGB(device)) {
       if (error === null) {
         const color = pilotToColor(cachedPilot[device.mac]);
         service
