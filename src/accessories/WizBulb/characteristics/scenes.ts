@@ -15,7 +15,8 @@ import { Pilot } from "../pilot";
 import { isRGB, isTW, turnOffIfNeeded } from "../util";
 
 enum SCENES {
-  "Ocean" = 1,
+  "No Scene",
+  "Ocean",
   "Romance",
   "Sunset",
   "Party",
@@ -49,8 +50,8 @@ enum SCENES {
   "Steampunk",
 }
 
-const DW_BULBS_SUPPORTED_SCENES_IDS = [9, 10, 13, 14, 29, 30, 31, 32];
-const TW_BULBS_SUPPORTED_SCENES_IDS = [
+const DW_BULBS_SUPPORTED_SCENES_IDS = [0, 9, 10, 13, 14, 29, 30, 31, 32];
+const TW_BULBS_SUPPORTED_SCENES_IDS = [0, 
   6, 9, 10, 11, 12, 13, 14, 15, 16, 18, 29, 30, 31, 32,
 ];
 const RGB_BULBS_SUPPORTED_SCENES_IDS = Object.keys(SCENES).reduce(
@@ -58,11 +59,11 @@ const RGB_BULBS_SUPPORTED_SCENES_IDS = Object.keys(SCENES).reduce(
   [] as number[]
 );
 
-/** 
-* Returns supported scenes for device. Based on https://bit.ly/3hLImPa.
-* @param device
-* @return array of ids of scenes supported by the particular light type
-*/
+/**
+ * Returns supported scenes for device. Based on https://bit.ly/3hLImPa.
+ * @param device
+ * @return array of ids of scenes supported by the particular light type
+ */
 function supportedScenesIdsForDevice(device: Device) {
   if (isTW(device)) return TW_BULBS_SUPPORTED_SCENES_IDS;
   else if (isRGB(device)) return RGB_BULBS_SUPPORTED_SCENES_IDS;
@@ -70,7 +71,7 @@ function supportedScenesIdsForDevice(device: Device) {
 }
 
 export function transformEffectId(pilot: Pilot): number {
-  return Number(pilot.sceneId);
+  return pilot.sceneId ?? 0;
 }
 
 export function transformEffectActive(pilot: Pilot): boolean {
@@ -85,88 +86,102 @@ export function initScenes(
   const { Characteristic, Service } = wiz;
 
   let scenesService = accessory.getService(Service.Television);
-  const service = accessory.getService(Service.Lightbulb)!;
+  const lightbulbService = accessory.getService(Service.Lightbulb)!;
   if (!scenesService) {
     scenesService = new Service.Television("Scenes");
     accessory.addService(scenesService);
+  }
 
-    scenesService
-      .getCharacteristic(Characteristic.ActiveIdentifier)
-      .on("get", callback =>
-        getPilot(
-          wiz,
-          accessory,
-          device,
-          pilot => callback(null, transformEffectId(pilot)),
-          callback
-        )
+  scenesService
+    .getCharacteristic(Characteristic.ActiveIdentifier)
+    .on("get", (callback) =>
+      getPilot(
+        wiz,
+        accessory,
+        device,
+        (pilot) => callback(null, transformEffectId(pilot)),
+        callback
       )
-      .on(
-        "set",
-        (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
-          const sceneId = Number(newValue);
+    )
+    .on(
+      "set",
+      (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+        const sceneId = Number(newValue);
+        if (sceneId === 0) {
+          // set to white if no scene
+          setPilot(wiz, accessory, device, { temp: 3000 }, next);
+        } else {
           setPilot(wiz, accessory, device, { sceneId }, next);
           if (sceneId !== 0) device.lastSelectedSceneId = sceneId;
         }
-      );
-
-    scenesService
-      .getCharacteristic(Characteristic.Active)
-      .on("get", callback =>
-        getPilot(
-          wiz,
-          accessory,
-          device,
-          pilot => callback(null, transformEffectActive(pilot)),
-          callback
-        )
+      }
+    );
+  
+  scenesService
+    .getCharacteristic(Characteristic.Active)
+    .on("get", callback =>
+      getPilot(
+        wiz,
+        accessory,
+        device,
+        pilot => callback(null, transformEffectActive(pilot)),
+        callback
       )
-      .on(
-        "set",
-        (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
-          console.log("active: ", newValue);
-          if (newValue === 0) {
-            scenesService!.setCharacteristic(
-              Characteristic.ActiveIdentifier,
-              0
-            );
+    )
+    .on(
+      "set",
+      (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+        const value = Boolean(newValue);
+        console.log(newValue);
+        lightbulbService.getCharacteristic(Characteristic.On).updateValue(value);
+        setPilot(wiz, accessory, device, { state: value }, next);
+      }
+    );
+  
+  lightbulbService.getCharacteristic(Characteristic.Active).on("set", (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+    const value = Boolean(newValue);
+    scenesService!.getCharacteristic(Characteristic.Active).updateValue(value);
+    next();
+  });
 
-            next(null);
-          } else {
-            scenesService!.setCharacteristic(
-              Characteristic.ActiveIdentifier,
-              device.lastSelectedSceneId ?? 1
-            );
-            turnOffIfNeeded(Characteristic.Hue, service);
-            turnOffIfNeeded(Characteristic.Saturation, service);
+  const turnOff = (_: CharacteristicValue, _next: CharacteristicSetCallback) => {
+    scenesService!.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(0);
+  };
+  lightbulbService.getCharacteristic(Characteristic.Saturation).on("set", turnOff);
+  lightbulbService.getCharacteristic(Characteristic.Hue).on("set", turnOff);
+  lightbulbService.getCharacteristic(Characteristic.ColorTemperature).on("set", turnOff);
 
-            next(null);
-          }
-        }
+  const scenesIds = supportedScenesIdsForDevice(device);
+  // remove any scenes that should not exist
+  accessory.services.filter(service => service.subtype != null).forEach(service => {
+    const id = Number(service.getCharacteristic(Characteristic.Identifier).value as number);
+    const index = scenesIds.indexOf(id);
+    if (index === -1) {
+      accessory.removeService(service);
+    } else {
+      scenesIds.splice(index, 1);
+    }
+  }); 
+
+  // now add any new ones
+  scenesIds.forEach((sceneId: number) => {
+    const sceneName = SCENES[sceneId];
+    const effectInputSource = accessory.addService(
+      Service.InputSource,
+      sceneId,
+      sceneName
+    );
+    effectInputSource
+      .setCharacteristic(Characteristic.Identifier, sceneId)
+      .setCharacteristic(Characteristic.ConfiguredName, sceneName)
+      .setCharacteristic(
+        Characteristic.IsConfigured,
+        Characteristic.IsConfigured.CONFIGURED
+      )
+      .setCharacteristic(
+        Characteristic.InputSourceType,
+        Characteristic.InputSourceType.HDMI
       );
-
-    const scenesIds = supportedScenesIdsForDevice(device);
-
-    scenesIds.forEach((sceneId: number) => {
-      const sceneName = SCENES[sceneId];
-      console.log(sceneName);
-      const effectInputSource = accessory.addService(
-        Service.InputSource,
-        sceneId,
-        sceneName
-      );
-      effectInputSource
-        .setCharacteristic(Characteristic.Identifier, sceneId)
-        .setCharacteristic(Characteristic.ConfiguredName, sceneName)
-        .setCharacteristic(
-          Characteristic.IsConfigured,
-          Characteristic.IsConfigured.CONFIGURED
-        )
-        .setCharacteristic(
-          Characteristic.InputSourceType,
-          Characteristic.InputSourceType.HDMI
-        );
-      scenesService!.addLinkedService(effectInputSource);
-    });
-  }
+    scenesService!.addLinkedService(effectInputSource);
+  }); 
 }

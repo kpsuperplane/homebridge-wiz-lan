@@ -21,7 +21,6 @@ import {
   transformSaturation,
   transformTemperature,
 } from "./characteristics";
-import { HAPStatus, HapStatusError } from "hap-nodejs";
 import {
   transformEffectActive,
   transformEffectId,
@@ -33,6 +32,7 @@ export interface Pilot {
   src: string;
   state: boolean;
   sceneId?: number;
+  speed?: number;
   temp?: number;
   dimming: number;
   r?: number;
@@ -167,31 +167,21 @@ export function setPilot(
   if (typeof oldPilot == "undefined") {
     return;
   }
-  const oldPilotValues = {
+  const newPilot = {
+    ...oldPilot,
     state: oldPilot.state ?? false,
     dimming: oldPilot.dimming ?? 10,
-    temp: oldPilot.temp,
-    r: oldPilot.r,
-    g: oldPilot.g,
-    b: oldPilot.b,
-    sceneId: oldPilot.sceneId,
-  };
-  let newPilot = {
-    ...oldPilotValues,
     ...pilot,
   };
 
-  if (pilot.r || pilot.g || pilot.b || pilot.temp) {
-    newPilot = { ...newPilot, sceneId: undefined };
-  }
-  if (newPilot.sceneId !== 0) {
-    newPilot = {
-      ...newPilot,
-      temp: undefined,
-      r: undefined,
-      g: undefined,
-      b: undefined,
-    };
+  if (pilot.sceneId !== undefined) {
+    newPilot.temp = undefined;
+    newPilot.r = undefined;
+    newPilot.g = undefined;
+    newPilot.b = undefined;
+  } else if (newPilot.r || newPilot.g || newPilot.b || newPilot.temp) {
+    newPilot.sceneId = undefined;
+    newPilot.speed = undefined;
   }
 
   cachedPilot[device.mac] = {
@@ -230,7 +220,6 @@ export function updateColorTemp(
 ) {
   const { Service } = wiz;
   const service = accessory.getService(Service.Lightbulb)!;
-  const scenesService = accessory.getService(Service.Television)!;
   return (error: Error | null) => {
     if (isTW(device) || isRGB(device)) {
       if (error === null) {
@@ -246,8 +235,6 @@ export function updateColorTemp(
             .getCharacteristic(wiz.Characteristic.Hue)
             .updateValue(color.hue);
         }
-
-        turnOffIfNeeded(wiz.Characteristic.Active, scenesService, true);
       }
     }
     next(error);

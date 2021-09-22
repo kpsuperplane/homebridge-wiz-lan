@@ -29,7 +29,6 @@ function initHue(
 ) {
   const { Characteristic, Service } = wiz;
   const service = accessory.getService(Service.Lightbulb)!;
-  const scenesService = new Service.Television("Scenes");
   service
     .getCharacteristic(Characteristic.Hue)
     .on("get", callback =>
