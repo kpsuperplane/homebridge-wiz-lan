@@ -1,6 +1,7 @@
 import {
   CharacteristicSetCallback,
   CharacteristicValue,
+  PlatformAccessory,
   Service as WizService,
 } from "homebridge";
 import HomebridgeWizLan from "../../../wiz";
@@ -15,26 +16,27 @@ export function transformOnOff(pilot: Pilot) {
   return Number(pilot.state);
 }
 export function initOnOff(
-  service: WizService,
+  accessory: PlatformAccessory,
   device: Device,
   wiz: HomebridgeWizLan
 ) {
-  const { Characteristic } = wiz;
+  const { Characteristic, Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   service
     .getCharacteristic(Characteristic.On)
-    .on("get", (callback) =>
+    .on("get", callback =>
       getPilot(
         wiz,
-        service,
+        accessory,
         device,
-        (pilot) => callback(null, transformOnOff(pilot)),
+        pilot => callback(null, transformOnOff(pilot)),
         callback
       )
     )
     .on(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
-        setPilot(wiz, device, { state: Boolean(newValue) }, next);
+        setPilot(wiz, accessory, device, { state: Boolean(newValue) }, next);
       }
     );
 }

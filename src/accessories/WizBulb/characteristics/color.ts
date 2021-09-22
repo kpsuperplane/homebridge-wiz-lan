@@ -1,7 +1,7 @@
 import {
   CharacteristicSetCallback,
   CharacteristicValue,
-  Service as WizService,
+  PlatformAccessory,
 } from "homebridge";
 import HomebridgeWizLan from "../../../wiz";
 import { Device } from "../../../types";
@@ -22,16 +22,22 @@ import {
 export function transformHue(pilot: Pilot) {
   return pilotToColor(pilot).hue;
 }
-function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
-  const { Characteristic } = wiz;
+function initHue(
+  accessory: PlatformAccessory,
+  device: Device,
+  wiz: HomebridgeWizLan
+) {
+  const { Characteristic, Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
+  const scenesService = new Service.Television("Scenes");
   service
     .getCharacteristic(Characteristic.Hue)
-    .on("get", (callback) =>
+    .on("get", callback =>
       getPilot(
         wiz,
-        service,
+        accessory,
         device,
-        (pilot) => callback(null, transformHue(pilot)),
+        pilot => callback(null, transformHue(pilot)),
         callback
       )
     )
@@ -40,6 +46,7 @@ function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         setPilot(
           wiz,
+          accessory,
           device,
           {
             temp: undefined,
@@ -49,7 +56,7 @@ function initHue(service: WizService, device: Device, wiz: HomebridgeWizLan) {
               wiz
             ),
           },
-          updateColorTemp(device, service, wiz, next)
+          updateColorTemp(device, accessory, wiz, next)
         );
       }
     );
@@ -59,19 +66,20 @@ export function transformSaturation(pilot: Pilot) {
   return pilotToColor(pilot).saturation;
 }
 function initSaturation(
-  service: WizService,
+  accessory: PlatformAccessory,
   device: Device,
   wiz: HomebridgeWizLan
 ) {
-  const { Characteristic } = wiz;
+  const { Characteristic, Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   service
     .getCharacteristic(Characteristic.Saturation)
     .on("get", (callback) =>
       getPilot(
         wiz,
-        service,
+        accessory,
         device,
-        (pilot) => callback(null, transformSaturation(pilot)),
+        pilot => callback(null, transformSaturation(pilot)),
         callback
       )
     )
@@ -80,6 +88,7 @@ function initSaturation(
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         setPilot(
           wiz,
+          accessory,
           device,
           {
             temp: undefined,
@@ -89,17 +98,17 @@ function initSaturation(
               wiz
             ),
           },
-          updateColorTemp(device, service, wiz, next)
+          updateColorTemp(device, accessory, wiz, next)
         );
       }
     );
 }
 
 export function initColor(
-  service: WizService,
+  accessory: PlatformAccessory,
   device: Device,
   wiz: HomebridgeWizLan
 ) {
-  initHue(service, device, wiz);
-  initSaturation(service, device, wiz);
+  initHue(accessory, device, wiz);
+  initSaturation(accessory, device, wiz);
 }

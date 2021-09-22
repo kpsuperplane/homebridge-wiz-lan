@@ -1,4 +1,4 @@
-import { Characteristic, Service, Service as WizService } from "homebridge";
+import { PlatformAccessory, Service, Service as WizService } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -13,7 +13,7 @@ import {
   rgb2colorTemperature,
   rgbToHsv,
 } from "../../util/color";
-import { isRGB, isTW } from "./util";
+import { isRGB, isTW, turnOffIfNeeded } from "./util";
 import {
   transformDimming,
   transformHue,
@@ -22,13 +22,17 @@ import {
   transformTemperature,
 } from "./characteristics";
 import { HAPStatus, HapStatusError } from "hap-nodejs";
+import {
+  transformEffectActive,
+  transformEffectId,
+} from "./characteristics/scenes";
 
 export interface Pilot {
   mac: string;
   rssi: number;
   src: string;
   state: boolean;
-  sceneId: number;
+  sceneId?: number;
   temp?: number;
   dimming: number;
   r?: number;
@@ -48,10 +52,13 @@ export const disabledAdaptiveLightingCallback: {
 
 function updatePilot(
   wiz: HomebridgeWizLan,
-  service: Service,
+  accessory: PlatformAccessory,
   device: Device,
   pilot: Pilot | Error
 ) {
+  const { Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
+
   service
     .getCharacteristic(wiz.Characteristic.On)
     .updateValue(pilot instanceof Error ? pilot : transformOnOff(pilot));
@@ -59,11 +66,29 @@ function updatePilot(
     .getCharacteristic(wiz.Characteristic.Brightness)
     .updateValue(pilot instanceof Error ? pilot : transformDimming(pilot));
   if (isTW(device) || isRGB(device)) {
-    service
-      .getCharacteristic(wiz.Characteristic.ColorTemperature)
+    let useCT = true;
+    if (!(pilot instanceof Error) && pilot.sceneId && pilot.sceneId > 0) {
+      useCT = false;
+    }
+
+    const scenesService = accessory.getService(Service.Television)!;
+
+    scenesService
+      .getCharacteristic(wiz.Characteristic.Active)
       .updateValue(
-        pilot instanceof Error ? pilot : transformTemperature(pilot)
+        pilot instanceof Error ? pilot : transformEffectActive(pilot)
       );
+    scenesService!
+      .getCharacteristic(wiz.Characteristic.ActiveIdentifier)
+      .updateValue(pilot instanceof Error ? pilot : transformEffectId(pilot));
+
+    if (useCT) {
+      service
+        .getCharacteristic(wiz.Characteristic.ColorTemperature)
+        .updateValue(
+          pilot instanceof Error ? pilot : transformTemperature(pilot)
+        );
+    }
   }
   if (isRGB(device)) {
     service
@@ -79,11 +104,13 @@ function updatePilot(
 // caching into account
 export function getPilot(
   wiz: HomebridgeWizLan,
-  service: Service,
+  accessory: PlatformAccessory,
   device: Device,
   onSuccess: (pilot: Pilot) => void,
   onError: (error: Error) => void
 ) {
+  const { Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
   let callbacked = false;
   const onDone = (error: Error | null, pilot: Pilot) => {
     const shouldCallback = !callbacked;
@@ -113,7 +140,7 @@ export function getPilot(
     if (shouldCallback) {
       onSuccess(pilot);
     } else {
-      updatePilot(wiz, service, device, pilot);
+      updatePilot(wiz, accessory, device, pilot);
     }
   };
   const timeout = setTimeout(() => {
@@ -131,6 +158,7 @@ export function getPilot(
 
 export function setPilot(
   wiz: HomebridgeWizLan,
+  accessory: PlatformAccessory,
   device: Device,
   pilot: Partial<Pilot>,
   callback: (error: Error | null) => void
@@ -146,13 +174,31 @@ export function setPilot(
     r: oldPilot.r,
     g: oldPilot.g,
     b: oldPilot.b,
+    sceneId: oldPilot.sceneId,
   };
-  const newPilot = {
+  let newPilot = {
     ...oldPilotValues,
     ...pilot,
   };
-  cachedPilot[device.mac] = { ...oldPilot, ...newPilot };
-  return _setPilot(wiz, device, newPilot, (error) => {
+
+  if (pilot.r || pilot.g || pilot.b || pilot.temp) {
+    newPilot = { ...newPilot, sceneId: undefined };
+  }
+  if (newPilot.sceneId !== 0) {
+    newPilot = {
+      ...newPilot,
+      temp: undefined,
+      r: undefined,
+      g: undefined,
+      b: undefined,
+    };
+  }
+
+  cachedPilot[device.mac] = {
+    ...oldPilot,
+    ...newPilot,
+  } as any;
+  return _setPilot(wiz, device, newPilot, error => {
     if (error !== null) {
       cachedPilot[device.mac] = oldPilot;
     }
@@ -178,12 +224,15 @@ export function pilotToColor(pilot: Pilot) {
 // Need to update hue, saturation, and temp when ANY of these change
 export function updateColorTemp(
   device: Device,
-  service: WizService,
+  accessory: PlatformAccessory,
   wiz: HomebridgeWizLan,
   next: (error: Error | null) => void
 ) {
+  const { Service } = wiz;
+  const service = accessory.getService(Service.Lightbulb)!;
+  const scenesService = accessory.getService(Service.Television)!;
   return (error: Error | null) => {
-    if (isTW(device)) {
+    if (isTW(device) || isRGB(device)) {
       if (error === null) {
         const color = pilotToColor(cachedPilot[device.mac]);
         service
@@ -197,6 +246,8 @@ export function updateColorTemp(
             .getCharacteristic(wiz.Characteristic.Hue)
             .updateValue(color.hue);
         }
+
+        turnOffIfNeeded(wiz.Characteristic.Active, scenesService, true);
       }
     }
     next(error);
