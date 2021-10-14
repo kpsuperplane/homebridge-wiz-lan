@@ -65,25 +65,25 @@ Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-i
 
 ## Credits
 Thanks to: 
-### [@dotkrnl](https://github.com/dotkrnl)
+#### [@dotkrnl](https://github.com/dotkrnl)
 [#7 Remove obsolete/invalid parameters from setPilot to fix](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/7)
 
-### [@victori](https://github.com/victori)
+#### [@victori](https://github.com/victori)
 [#16 Support costco wiz lights that behave differently from philips wiz](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/16)
 
-### [@Supereg](https://github.com/supereg)
+#### [@Supereg](https://github.com/supereg)
 [#25 Fix: getter for Name Characteristic returned object instead of the value](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/25)
 
-### [@MoTechnicalities](https://github.com/motechnicalities)
+#### [@MoTechnicalities](https://github.com/motechnicalities)
 [#56 Update README.md](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/56)
 
-### [@xmanu](https://github.com/xmanu)
+#### [@xmanu](https://github.com/xmanu)
 [#57 transform the received dimming value to also fit the 10 to 100 range](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/57)
 
-### [@BMDan](https://github.com/bmdan)
+#### [@BMDan](https://github.com/bmdan)
 [#67 feat: Support durable custom names in config](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/67)
 
-### [@krystofcelba](https://github.com/krystofcelba)
+#### [@krystofcelba](https://github.com/krystofcelba)
 [#74 feat: implement dynamic scenes selector](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/74)
 
 ## Contributing
