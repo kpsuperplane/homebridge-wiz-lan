@@ -41,11 +41,11 @@
               "type": "string",
               "format": "ipv4"
             },
-            "mac": {
+            "name": {
               "title": "Device Name",
               "type": "string"
             },
-            "name": {
+            "mac": {
               "title": "Device MAC",
               "type": "string"
             }
