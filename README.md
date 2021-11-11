@@ -86,6 +86,9 @@ Thanks to:
 #### [@krystofcelba](https://github.com/krystofcelba)
 [#74 feat: implement dynamic scenes selector](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/74)
 
+#### [@bwp91](https://github.com/bwp91)
+[#81 Add a config schema form](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81)
+
 ## Contributing
 
 Mostly built for my own personal use, I'll probably reply to any created issues but probably will not actively support anything outside of the RGB bulbs. If you'd like to make a PR through, <3
