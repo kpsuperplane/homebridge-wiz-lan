@@ -1,0 +1,57 @@
+{
+  "pluginAlias": "WizSmarthome",
+  "pluginType": "platform",
+  "singular":true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "WizSmarthome"
+      },
+      "port": {
+        "title": "Port",
+        "type": "integer",
+        "description": "[Optional] Port for bulbs to connect to your server.",
+        "placeholder": 38900,
+        "minimum": 0
+      },
+      "broadcast": {
+        "title": "Broadcast Address",
+        "type": "string",
+        "format": "ipv4",
+        "description": "[Optional] UDP Broadcast address for bulb discovery."
+      },
+      "address": {
+        "title": "Server Address",
+        "type": "string",
+        "format": "ipv4",
+        "description": "[Optional] Your server's IP address."
+      },
+      "devices": {
+        "title": "Devices",
+        "type": "array",
+        "description": "[Optional] Manual list of IP addresses of bulbs",
+        "items": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "title": "Device IP",
+              "type": "string",
+              "format": "ipv4"
+            },
+            "mac": {
+              "title": "Device Name",
+              "type": "string"
+            },
+            "name": {
+              "title": "Device MAC",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
