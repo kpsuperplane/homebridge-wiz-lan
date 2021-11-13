@@ -1,7 +1,8 @@
 # Changelog
 
 ## 3.1.0
-- [FEAT] Add support for scenes! Optionally disable this via `enableScenes` param since it removes your ability to tap on a tile to turn a light on/off. 
+- [FEAT] Add support for scenes! Optionally disable this via `enableScenes` param since it removes your ability to tap on a tile to turn a light on/off
+- [FEAT] Config UI for HOOBS
 - Credits for contributors. Thank you:
     #### [@dotkrnl](https://github.com/dotkrnl)
     [#7 Remove obsolete/invalid parameters from setPilot to fix](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/7)
