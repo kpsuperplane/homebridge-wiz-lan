@@ -1,6 +1,6 @@
 {
   "name": "homebridge-wiz-lan",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "A homebridge plugin to control Wiz Lights",
   "main": "dist/index.js",
   "keywords": [
