@@ -1,4 +1,4 @@
-import { PlatformAccessory, Service, Service as WizService } from "homebridge";
+import { PlatformAccessory } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
@@ -13,7 +13,7 @@ import {
   rgb2colorTemperature,
   rgbToHsv,
 } from "../../util/color";
-import { isRGB, isTW, turnOffIfNeeded } from "./util";
+import { isRGB, isTW } from "./util";
 import {
   transformDimming,
   transformHue,
@@ -22,7 +22,6 @@ import {
   transformTemperature,
 } from "./characteristics";
 import {
-  transformEffectActive,
   transformEffectId,
 } from "./characteristics/scenes";
 
@@ -70,18 +69,6 @@ function updatePilot(
     if (!(pilot instanceof Error) && pilot.sceneId && pilot.sceneId > 0) {
       useCT = false;
     }
-
-    const scenesService = accessory.getService(Service.Television)!;
-
-    scenesService
-      .getCharacteristic(wiz.Characteristic.Active)
-      .updateValue(
-        pilot instanceof Error ? pilot : transformEffectActive(pilot)
-      );
-    scenesService!
-      .getCharacteristic(wiz.Characteristic.ActiveIdentifier)
-      .updateValue(pilot instanceof Error ? pilot : transformEffectId(pilot));
-
     if (useCT) {
       service
         .getCharacteristic(wiz.Characteristic.ColorTemperature)
@@ -98,6 +85,20 @@ function updatePilot(
       .getCharacteristic(wiz.Characteristic.Saturation)
       .updateValue(pilot instanceof Error ? pilot : transformSaturation(pilot));
   }
+
+  const scenesService = accessory.getService(Service.Television);
+
+  if (scenesService != null) {
+    scenesService
+      .getCharacteristic(wiz.Characteristic.Active)
+      .updateValue(
+        pilot instanceof Error ? pilot : transformOnOff(pilot)
+      );
+    scenesService!
+      .getCharacteristic(wiz.Characteristic.ActiveIdentifier)
+      .updateValue(pilot instanceof Error ? pilot : transformEffectId(pilot));
+  }
+
 }
 
 // Write a custom getPilot/setPilot that takes this
@@ -188,7 +189,7 @@ export function setPilot(
     ...oldPilot,
     ...newPilot,
   } as any;
-  return _setPilot(wiz, device, newPilot, error => {
+  return _setPilot(wiz, device, newPilot, (error) => {
     if (error !== null) {
       cachedPilot[device.mac] = oldPilot;
     }

@@ -17,6 +17,12 @@
         "placeholder": 38900,
         "minimum": 0
       },
+      "enableScenes": {
+        "title": "Enable Scenes",
+        "type": "boolean",
+        "description": "[Optional] Turn on support for scenes with your lightbulbs.",
+        "default": true
+      },
       "broadcast": {
         "title": "Broadcast Address",
         "type": "string",
