@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.1.1
+## 3.1.1, 3.1.2
 - [FIX] Make scenes opt-in since it breaks light-grouping functionality
 
 ## 3.1.0
