@@ -1,5 +1,32 @@
 # Changelog
 
+## 3.1.0
+- [FEAT] Add support for scenes! Optionally disable this via `enableScenes` param since it removes your ability to tap on a tile to turn a light on/off. 
+- Credits for contributors. Thank you:
+    #### [@dotkrnl](https://github.com/dotkrnl)
+    [#7 Remove obsolete/invalid parameters from setPilot to fix](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/7)
+
+    #### [@victori](https://github.com/victori)
+    [#16 Support costco wiz lights that behave differently from philips wiz](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/16)
+
+    #### [@Supereg](https://github.com/supereg)
+    [#25 Fix: getter for Name Characteristic returned object instead of the value](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/25)
+
+    #### [@MoTechnicalities](https://github.com/motechnicalities)
+    [#56 Update README.md](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/56)
+
+    #### [@xmanu](https://github.com/xmanu)
+    [#57 transform the received dimming value to also fit the 10 to 100 range](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/57)
+
+    #### [@BMDan](https://github.com/bmdan)
+    [#67 feat: Support durable custom names in config](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/67)
+
+    #### [@krystofcelba](https://github.com/krystofcelba)
+    [#74 feat: implement dynamic scenes selector](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/74)
+
+    #### [@bwp91](https://github.com/bwp91)
+    [#81 Add a config schema form](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81)
+
 ## 3.0.2
 - [FIX] Add instant response for bulbs, will now return last-known value if bulbs take more than 1 second to respond.
 
