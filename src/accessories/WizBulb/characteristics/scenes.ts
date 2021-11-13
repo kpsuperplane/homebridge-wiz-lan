@@ -82,7 +82,7 @@ export function initScenes(
   let scenesService = accessory.getService(Service.Television);
   const lightbulbService = accessory.getService(Service.Lightbulb)!;
 
-  if (config.enableScenes === true) {
+  if (config.enableScenes !== true) {
     if (scenesService != null) {
       accessory.removeService(scenesService);
     }
