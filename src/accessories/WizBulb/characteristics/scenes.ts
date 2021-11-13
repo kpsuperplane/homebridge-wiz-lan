@@ -12,52 +12,50 @@ import {
 } from "../../../util/network";
 import { getPilot, setPilot } from "../pilot";
 import { Pilot } from "../pilot";
-import { isRGB, isTW, turnOffIfNeeded } from "../util";
+import { isRGB, isTW } from "../util";
+import { transformOnOff } from ".";
 
-enum SCENES {
-  "No Scene",
-  "Ocean",
-  "Romance",
-  "Sunset",
-  "Party",
-  "Fireplace",
-  "Cozy",
-  "Forest",
-  "Pastel Colors",
-  "Wake up",
-  "Bedtime",
-  "Warm White",
-  "Daylight",
-  "Cool white",
-  "Night light",
-  "Focus",
-  "Relax",
-  "True colors",
-  "TV time",
-  "Plantgrowth",
-  "Spring",
-  "Summer",
-  "Fall",
-  "Deepdive",
-  "Jungle",
-  "Mojito",
-  "Club",
-  "Christmas",
-  "Halloween",
-  "Candlelight",
-  "Golden white",
-  "Pulse",
-  "Steampunk",
-}
-
-const DW_BULBS_SUPPORTED_SCENES_IDS = [0, 9, 10, 13, 14, 29, 30, 31, 32];
-const TW_BULBS_SUPPORTED_SCENES_IDS = [0, 
-  6, 9, 10, 11, 12, 13, 14, 15, 16, 18, 29, 30, 31, 32,
+const SCENES = [
+  ["No Scene", ["RGB", "DW", "TW"]], //0
+  ["Ocean", ["RGB"]], // 1
+  ["Romance", ["RGB"]], // 2
+  ["Sunset", ["RGB"]], // 3
+  ["Party", ["RGB"]], // 4
+  ["Fireplace", ["RGB"]], // 5
+  ["Cozy", ["RGB", "TW"]], // 6
+  ["Forest", ["RGB"]], // 7
+  ["Pastel Colors", ["RGB"]], // 8
+  ["Wake up", ["RGB", "DW", "TW"]], // 9
+  ["Bedtime", ["RGB", "DW", "TW"]], // 10
+  ["Warm White", ["RGB", "TW"]], // 11
+  ["Daylight", ["RGB", "TW"]], // 12
+  ["Cool white", ["RGB", "DW", "TW"]], // 13
+  ["Night light", ["RGB", "DW", "TW"]], // 14
+  ["Focus", ["RGB", "TW"]], // 15
+  ["Relax", ["RGB", "TW"]], // 16
+  ["True colors", ["RGB"]], // 17
+  ["TV time", ["RGB", "TW"]], // 18
+  ["Plantgrowth", ["RGB"]], // 19
+  ["Spring", ["RGB"]], // 20
+  ["Summer", ["RGB"]], // 21
+  ["Fall", ["RGB"]], // 22
+  ["Deepdive", ["RGB"]], // 23
+  ["Jungle", ["RGB"]], // 24
+  ["Mojito", ["RGB"]], // 25
+  ["Club", ["RGB"]], // 26
+  ["Christmas", ["RGB"]], // 27
+  ["Halloween", ["RGB"]], // 28
+  ["Candlelight", ["RGB", "DW", "TW"]], // 29
+  ["Golden white", ["RGB", "DW", "TW"]], // 30
+  ["Pulse", ["RGB", "DW", "TW"]], // 31
+  ["Steampunk", ["RGB", "DW", "TW"]], // 32
 ];
-const RGB_BULBS_SUPPORTED_SCENES_IDS = Object.keys(SCENES).reduce(
-  (ids, key) => (isNaN(Number(key)) ? ids : [...ids, Number(key)]),
-  [] as number[]
-);
+
+function getScenes(type: string) {
+  return SCENES.map((scene, idx) => ({ idx, scene }))
+    .filter((item) => item.scene[1].includes(type))
+    .map((item) => item.idx);
+}
 
 /**
  * Returns supported scenes for device. Based on https://bit.ly/3hLImPa.
@@ -65,17 +63,13 @@ const RGB_BULBS_SUPPORTED_SCENES_IDS = Object.keys(SCENES).reduce(
  * @return array of ids of scenes supported by the particular light type
  */
 function supportedScenesIdsForDevice(device: Device) {
-  if (isTW(device)) return TW_BULBS_SUPPORTED_SCENES_IDS;
-  else if (isRGB(device)) return RGB_BULBS_SUPPORTED_SCENES_IDS;
-  return DW_BULBS_SUPPORTED_SCENES_IDS;
+  if (isTW(device)) return getScenes("TW");
+  else if (isRGB(device)) return getScenes("RGB");
+  return getScenes("DW");
 }
 
 export function transformEffectId(pilot: Pilot): number {
   return pilot.sceneId ?? 0;
-}
-
-export function transformEffectActive(pilot: Pilot): boolean {
-  return Number(pilot.sceneId) > 0;
 }
 
 export function initScenes(
@@ -83,12 +77,23 @@ export function initScenes(
   accessory: PlatformAccessory,
   device: Device
 ) {
-  const { Characteristic, Service } = wiz;
+  const { Characteristic, Service, config } = wiz;
 
   let scenesService = accessory.getService(Service.Television);
   const lightbulbService = accessory.getService(Service.Lightbulb)!;
-  if (!scenesService) {
-    scenesService = new Service.Television("Scenes");
+
+  if (config.enableScenes === false) {
+    if (scenesService != null) {
+      accessory.removeService(scenesService);
+    }
+    accessory.services
+      .filter((service) => service.subtype != null)
+      .forEach(service => accessory.removeService(service));
+    return;
+  }
+
+  if (scenesService == null) {
+    scenesService = new Service.Television(accessory.displayName);
     accessory.addService(scenesService);
   }
 
@@ -116,15 +121,15 @@ export function initScenes(
         }
       }
     );
-  
+
   scenesService
     .getCharacteristic(Characteristic.Active)
-    .on("get", callback =>
+    .on("get", (callback) =>
       getPilot(
         wiz,
         accessory,
         device,
-        pilot => callback(null, transformEffectActive(pilot)),
+        (pilot) => callback(null, transformOnOff(pilot)),
         callback
       )
     )
@@ -132,46 +137,45 @@ export function initScenes(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         const value = Boolean(newValue);
-        console.log(newValue);
-        lightbulbService.getCharacteristic(Characteristic.On).updateValue(value);
+        lightbulbService
+          .getCharacteristic(Characteristic.On)
+          .updateValue(value);
         setPilot(wiz, accessory, device, { state: value }, next);
       }
     );
-  
-  lightbulbService.getCharacteristic(Characteristic.Active).on("set", (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
-    const value = Boolean(newValue);
-    scenesService!.getCharacteristic(Characteristic.Active).updateValue(value);
-    next();
-  });
 
-  const turnOff = (_: CharacteristicValue, _next: CharacteristicSetCallback) => {
-    scenesService!.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(0);
-  };
-  lightbulbService.getCharacteristic(Characteristic.Saturation).on("set", turnOff);
-  lightbulbService.getCharacteristic(Characteristic.Hue).on("set", turnOff);
-  lightbulbService.getCharacteristic(Characteristic.ColorTemperature).on("set", turnOff);
-
-  const scenesIds = supportedScenesIdsForDevice(device);
-  // remove any scenes that should not exist
-  accessory.services.filter(service => service.subtype != null).forEach(service => {
-    const id = Number(service.getCharacteristic(Characteristic.Identifier).value as number);
-    const index = scenesIds.indexOf(id);
-    if (index === -1) {
-      accessory.removeService(service);
-    } else {
-      scenesIds.splice(index, 1);
-    }
-  }); 
-
-  // now add any new ones
-  scenesIds.forEach((sceneId: number) => {
-    const sceneName = SCENES[sceneId];
-    const effectInputSource = accessory.addService(
-      Service.InputSource,
-      sceneId,
-      sceneName
+  lightbulbService
+    .getCharacteristic(Characteristic.Active)
+    .on(
+      "set",
+      (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+        const value = Boolean(newValue);
+        scenesService!
+          .getCharacteristic(Characteristic.Active)
+          .updateValue(value);
+        next();
+      }
     );
-    effectInputSource
+
+  const turnOff = (
+    _: CharacteristicValue,
+    _next: CharacteristicSetCallback
+  ) => {
+    scenesService!
+      .getCharacteristic(Characteristic.ActiveIdentifier)
+      .updateValue(0);
+  };
+  lightbulbService
+    .getCharacteristic(Characteristic.Saturation)
+    .on("set", turnOff);
+  lightbulbService.getCharacteristic(Characteristic.Hue).on("set", turnOff);
+  lightbulbService
+    .getCharacteristic(Characteristic.ColorTemperature)
+    .on("set", turnOff);
+
+  const configureInputSource = (sceneId: number, service: WizService) => {
+    const sceneName = SCENES[sceneId][0];
+    service
       .setCharacteristic(Characteristic.Identifier, sceneId)
       .setCharacteristic(Characteristic.ConfiguredName, sceneName)
       .setCharacteristic(
@@ -182,6 +186,38 @@ export function initScenes(
         Characteristic.InputSourceType,
         Characteristic.InputSourceType.HDMI
       );
-    scenesService!.addLinkedService(effectInputSource);
-  }); 
+    scenesService!.addLinkedService(service);
+  };
+
+  const supportedSceneIds = supportedScenesIdsForDevice(device);
+  // remove any scenes that should not exist
+  const existingSceneIds = accessory.services
+    .filter((service) => service.subtype != null)
+    .map((service) => {
+      const id = Number(
+        service.getCharacteristic(Characteristic.Identifier).value as number
+      );
+      if (supportedSceneIds.includes(id)) {
+        configureInputSource(id, service);
+        return id;
+      } else {
+        accessory.removeService(service);
+      }
+      return null;
+    });
+
+  const missingSceneIds = supportedSceneIds.filter(
+    (id) => !existingSceneIds.includes(id)
+  );
+
+  // now add any new ones
+  missingSceneIds.forEach((sceneId: number) => {
+    const sceneName = SCENES[sceneId][0];
+    const service = accessory.addService(
+      Service.InputSource,
+      sceneId,
+      sceneName
+    );
+    configureInputSource(sceneId, service);
+  });
 }

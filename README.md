@@ -30,6 +30,10 @@ Full configuration options:
     // Default: 38900
     "port": 38900,
 
+    // [Optional] Enable scenes support for your bulbs
+    // Default: true
+    "enableScenes": true,
+
     // [Optional] UDP Broadcast address for bulb discovery
     // Default: 255.255.255.255
     "broadcast": "255.255.255.255",
