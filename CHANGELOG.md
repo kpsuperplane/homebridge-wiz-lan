@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.1.1
+- [FIX] Make scenes opt-in since it breaks light-grouping functionality
+
 ## 3.1.0
 - [FEAT] Add support for scenes! Optionally disable this via `enableScenes` param since it removes your ability to tap on a tile to turn a light on/off
 - [FEAT] Config UI for HOOBS

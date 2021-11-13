@@ -20,8 +20,8 @@
       "enableScenes": {
         "title": "Enable Scenes",
         "type": "boolean",
-        "description": "[Optional] Turn on support for scenes with your lightbulbs.",
-        "default": true
+        "description": "[Optional] Turn on support for scenes with your lightbulbs. THIS WILL MAKE IT IMPOSSIBLE TO GROUP LIGHTS",
+        "default": false
       },
       "broadcast": {
         "title": "Broadcast Address",
