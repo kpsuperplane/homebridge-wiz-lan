@@ -93,7 +93,7 @@ export default class HomebridgeWizLan {
     const accessory = Accessories.find(accessory => accessory.is(device));
 
     if (typeof accessory === 'undefined') {
-      this.log.warn(`Unknown device ${device.toString()}, skipping...`);
+      this.log.warn(`Unknown device ${device.model.toString()}, skipping...`);
       return;
     } 
 
