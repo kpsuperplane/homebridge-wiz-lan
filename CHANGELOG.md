@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.2.0
+- [FEAT] Support for Wiz Plugs/Outlets
+
 ## 3.1.1, 3.1.2
 - [FIX] Make scenes opt-in since it breaks light-grouping functionality
 
