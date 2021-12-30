@@ -13,7 +13,7 @@ import {
 import { getPilot, Pilot, setPilot } from "../pilot";
 
 export function transformDimming(pilot: Pilot) {
-  return Number(Math.round((Math.max(10, Number(pilot.dimming)) - 100) * 1.1 + 100));
+  return Number(Math.floor((Math.max(10, Number(pilot.dimming)+.001) - 100) * 1.1 + 100));
 }
 export function initDimming(
   accessory: PlatformAccessory,
