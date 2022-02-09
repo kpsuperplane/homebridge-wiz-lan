@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.2.1
+- [FIX] Fixes the dimming math to correctly map 0% -> 10% 
+- [FIX] Handles bulb not sending a brightness value, defaults to the on/off state of the bulb
+- Thank you [@MoTechnicalities](https://github.com/motechnicalities) for diagnosing and responding to these issues
+
 ## 3.2.0
 - [FEAT] Support for Wiz Plugs/Outlets
 
