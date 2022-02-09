@@ -236,6 +236,7 @@ export function sendDiscoveryBroadcast(service: HomebridgeWizLan) {
   if (Array.isArray(service.config.devices)) {
     for (const device of service.config.devices) {
       if (device.host) {
+        log.info(`Sending discovery UDP broadcast to ${device.host}:${BROADCAST_PORT}`);
         service.socket.send(
           `{"method":"registration","params":{"phoneMac":"${MAC}","register":false,"phoneIp":"${ADDRESS}"}}`,
           BROADCAST_PORT,
