@@ -33,7 +33,7 @@ export interface Pilot {
   sceneId?: number;
   speed?: number;
   temp?: number;
-  dimming: number;
+  dimming?: number;
   r?: number;
   g?: number;
   b?: number;
@@ -137,7 +137,11 @@ export function getPilot(
     ) {
       disabledAdaptiveLightingCallback[device.mac]?.();
     }
-    cachedPilot[device.mac] = pilot;
+    cachedPilot[device.mac] = {
+      // if no dimming info provided, use the last known on/off state
+      dimming: (pilot.state ?? old.state) ? 100 : 10,
+      ...pilot
+    };
     if (shouldCallback) {
       onSuccess(pilot);
     } else {

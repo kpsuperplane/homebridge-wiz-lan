@@ -13,7 +13,9 @@ import {
 import { getPilot, Pilot, setPilot } from "../pilot";
 
 export function transformDimming(pilot: Pilot) {
-  return Number(Math.round((Math.max(10, Number(pilot.dimming)) - 100) * 1.1 + 100));
+  // do the reverse of the below
+  // 10% <-> 100% --> 1% <-> 100% 
+  return Math.floor(Number(pilot.dimming) * 1.1) - 10;
 }
 export function initDimming(
   accessory: PlatformAccessory,
@@ -40,8 +42,9 @@ export function initDimming(
           wiz,
           accessory,
           device,
-          // for some reason < 10% is invalid, so we gotta fit it into 10% <-> 100%
-          { dimming: Math.round((Math.max(1, Number(newValue)) + 10) / 1.1) },
+          // for some reason < 10% is invalid, so we gotta fit 0% <-> 100% it into 10% <-> 100%
+          // 0%, 1% -> 10% since that's the minimum acceptable value
+          { dimming: Math.floor(Number(newValue) * 0.9) + 10 },
           next
         );
       }
