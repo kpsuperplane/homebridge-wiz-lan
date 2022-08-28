@@ -6,6 +6,9 @@ Based off of kpsuperplane/homebridge-iotas
 - Wiz Plugs/Outlets (ESP10_SOCKET_06)
 
 # Installation
+
+Make sure your bulbs are already set up via the Wiz app and you have "Allow Local Communication" set to ON in your settings. 
+
 1. Install homebridge using: `npm install -g homebridge`
 2. Install this plugin using: `npm install -g homebridge-wiz-lan`
 3. Update your configuration file. See the sample below.
