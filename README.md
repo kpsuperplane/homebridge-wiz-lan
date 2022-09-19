@@ -3,7 +3,7 @@ Based off of kpsuperplane/homebridge-iotas
 
 ## Currently supports
 - Lightbulbs (RGB, Color Temp, and Single Color) (tested with Wiz 100W Color & Wiz 30W Filaments)
-- Wiz Plugs/Outlets (ESP10_SOCKET_06)
+- Wiz Plugs/Outlets (ESP10_SOCKET_06, ESP25_SOCKET_01)
 
 # Installation
 
