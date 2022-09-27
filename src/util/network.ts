@@ -5,6 +5,8 @@ import getMac from "getmac";
 import HomebridgeWizLan from "../wiz";
 import { Device } from "../types";
 import { makeLogger } from "./logger";
+import { Pilot as BulbPilot } from "../accessories/WizBulb/pilot";
+import { Pilot as SocketPilot } from "../accessories/WizSocket/pilot";
 
 function strMac() {
   return getMac().toUpperCase().replace(/:/g, "");
@@ -88,17 +90,37 @@ const setPilotQueue: { [key: string]: ((error: Error | null) => void)[] } = {};
 export function setPilot(
   wiz: HomebridgeWizLan,
   device: Device,
-  pilot: object,
+  pilot: BulbPilot | SocketPilot,
   callback: (error: Error | null) => void
 ) {
+  const pilotParams = {};
+  if (wiz.config.lastStatus) {
+    // Keep only the settings that cannot change the bulb color
+    if (pilot.hasOwnProperty('state')) {
+      Object.assign(pilotParams, { state: pilot.state })
+    }
+    if (pilot.hasOwnProperty('rssi')) {
+      Object.assign(pilotParams, { rssi: pilot.rssi })
+    }
+    if (pilot.hasOwnProperty('mac')) {
+      Object.assign(pilotParams, { mac: pilot.mac })
+    }
+    if (pilot.hasOwnProperty('src')) {
+      Object.assign(pilotParams, { src: pilot.src })
+    }
+  } else {
+    Object.assign(pilotParams, pilot);
+  }
   const msg = JSON.stringify({
     method: "setPilot",
     env: "pro",
-    params: {
-      mac: device.mac,
-      src: "udp",
-      ...pilot,
-    },
+    params: Object.assign(
+      {
+        mac: device.mac,
+        src: "udp",
+      },
+      pilotParams,
+    ),
   });
   if (device.ip in setPilotQueue) {
     setPilotQueue[device.ip].push(callback);
