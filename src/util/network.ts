@@ -5,7 +5,7 @@ import getMac from "getmac";
 import HomebridgeWizLan from "../wiz";
 import { Device } from "../types";
 import { makeLogger } from "./logger";
-import { Pilot as BulbPilot, Pilot } from "../accessories/WizBulb/pilot";
+import { Pilot as BulbPilot } from "../accessories/WizBulb/pilot";
 import { Pilot as SocketPilot } from "../accessories/WizSocket/pilot";
 
 function strMac() {
