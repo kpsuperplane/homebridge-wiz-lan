@@ -75,8 +75,6 @@ Luckily, even if we only enable the color mode, we still get a nice temperature 
 ### Last Status (config setting)
 If a "rhythm" is selected in the Wiz app and `lastStatus` is set to `true`, the lights will always turn on to the rhythm. When rhythms are disabled, lights turn on to whatever setting they had when last turned off.
 
-For some reason when the lights are turned off while on the "Night light" setting, the lights turn back on to whatever setting they were on before being switched to "Night light". This is the only known light setting that causes `lastStatus` to not work correctly.
-
 # Development
 Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1
 
