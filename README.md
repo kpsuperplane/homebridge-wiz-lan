@@ -104,6 +104,12 @@ Thanks to:
 #### [@bwp91](https://github.com/bwp91)
 [#81 Add a config schema form](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81)
 
+#### [@AndrewSverdrup](https://github.com/AndrewSverdrup) 
+[#119 Add lastStatus setting so lights remember their setting when turned on](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/119)
+
+#### [@pyrliu](https://github.com/pyrliu) 
+[#118 Added support for Wiz Smart Plug ESP25_SOCKET_01](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/118)
+
 ## Contributing
 
 Mostly built for my own personal use, I'll probably reply to any created issues but probably will not actively support anything outside of the RGB bulbs. If you'd like to make a PR through, <3
