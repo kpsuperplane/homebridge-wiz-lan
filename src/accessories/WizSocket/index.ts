@@ -12,7 +12,7 @@ import {
 
 const WizSocket: WizAccessory = {
   is: (device: Device) =>
-    ["ESP10_SOCKET_06"].some((id) => device.model.includes(id)),
+    ["ESP10_SOCKET_06", "ESP25_SOCKET_01"].some((id) => device.model.includes(id)),
   getName: (_: Device) => {
     return "Wiz Socket";
   },
