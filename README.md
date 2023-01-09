@@ -38,6 +38,10 @@ Full configuration options:
     // Default: false
     "enableScenes": false,
 
+    // [Optional] Lights turn on with the same settings they had when turned off (light configs in HomeKit are ignored).
+    // Default: false
+    "lastStatus": false,
+
     // [Optional] UDP Broadcast address for bulb discovery
     // Default: 255.255.255.255
     "broadcast": "255.255.255.255",
@@ -67,6 +71,9 @@ The Wiz bulbs strongly distinguish between RGB color modes and Kelvin color mode
 Luckily, even if we only enable the color mode, we still get a nice temperature picker. Problem is, the color temperature is given in standard HSV. As such, this app will try to guess which one to best use given a color, and you will notice some significant brightness variance switching between a "temp" hue and a "color" hue.
 
 **In particular, since the Wiz bulbs only support up to 6500K, this means that only the top-ish half of the temperature picker is actually bright**
+
+### Last Status (config setting)
+If a "rhythm" is selected in the Wiz app and `lastStatus` is set to `true`, the lights will always turn on to the rhythm. When rhythms are disabled, lights turn on to whatever setting they had when last turned off.
 
 # Development
 Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1
