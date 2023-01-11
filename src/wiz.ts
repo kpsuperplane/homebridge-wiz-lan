@@ -9,7 +9,7 @@ import {
 
 import { PLATFORM_NAME, PLUGIN_NAME } from "./constants";
 import { Config, Device } from "./types";
-import Accessories from './accessories';
+import Accessories, { WizAccessory } from './accessories';
 import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveryBroadcast } from "./util/network";
 
 export default class HomebridgeWizLan {
@@ -19,7 +19,7 @@ export default class HomebridgeWizLan {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public readonly initializedAccessories = new Set<string>();
+  public readonly initializedAccessories: {[uuid: string]: WizAccessory<any>} = {};
   public readonly socket: Socket;
 
   constructor(
@@ -41,12 +41,14 @@ export default class HomebridgeWizLan {
         sendDiscoveryBroadcast(this);
       });
     });
+
+    this.initRefreshPings();
   }
 
   initAccessory(platformAccessory: PlatformAccessory) {
 
     // Already initialized!!
-    if (this.initializedAccessories.has(platformAccessory.UUID)) {
+    if (platformAccessory.UUID in this.initializedAccessories) {
       return;
     }
 
@@ -63,16 +65,34 @@ export default class HomebridgeWizLan {
       .setCharacteristic(this.Characteristic.Model, device.model)
       .setCharacteristic(this.Characteristic.SerialNumber, device.mac);
 
-    const accessory = Accessories.find(accessory => accessory.is(device));
+    const AccessoryClass = Accessories.find(accessory => accessory.is(device));
 
-    if (typeof accessory === 'undefined') {
+    if (typeof AccessoryClass === 'undefined') {
       this.log.warn(`Unknown device ${device.toString()}, skipping...`);
       return;
     } 
 
-    accessory.init(platformAccessory, device, this);
+    const accessory = new AccessoryClass(platformAccessory, device, this);
+    accessory.init();
 
-    this.initializedAccessories.add(platformAccessory.UUID);
+    this.initializedAccessories[platformAccessory.UUID] = accessory;
+    return accessory;
+  }
+
+  initRefreshPings() {
+    const interval = Number(this.config.refreshInterval ?? 0);
+    if (interval === 0) {
+      this.log.info("[Refresh] Pings are off");
+    } else {
+      this.log.info(`[Refresh] Setting up ping for every ${interval} seconds`);
+      setInterval(() => {
+        const accessories = Object.values(this.initializedAccessories);
+        this.log.info(`[Refresh] Pinging ${accessories.length} accessories...`);
+        for (const accessory of accessories) {
+          accessory.getPilot().catch((error) => this.log.error(error));
+        }
+      }, interval * 1000);
+    }
   }
 
   /**

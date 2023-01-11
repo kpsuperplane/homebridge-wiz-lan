@@ -1,11 +1,6 @@
-import { PlatformAccessory } from "homebridge";
 import { WizAccessory } from "..";
-import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
-import {
-  getPilot as _getPilot,
-  setPilot as _setPilot,
-} from "../../util/network";
+import { getPilot, Pilot } from "./pilot";
 import {
   initOnOff,
   initDimming,
@@ -16,10 +11,10 @@ import { initAdaptiveLighting } from "./AdaptiveLighting";
 import { isRGB, isTW } from "./util";
 import { initScenes } from "./characteristics/scenes";
 
-const WizBulb: WizAccessory = {
-  is: (device: Device) =>
-    ["SHRGB", "SHDW", "SHTW"].some((id) => device.model.includes(id)),
-  getName: ({ model }: Device) => {
+class WizBulb extends WizAccessory<Pilot> {
+  static is = (device: Device) =>
+    ["SHRGB", "SHDW", "SHTW"].some((id) => device.model.includes(id));
+  static getName = ({ model }: Device) => {
     if (model.includes("SHRGB")) {
       return "RGB Bulb";
     } else if (model.includes("SHDW")) {
@@ -28,12 +23,9 @@ const WizBulb: WizAccessory = {
       return "Tunable White Bulb";
     }
     return "Unknown Bulb";
-  },
-  init: (
-    accessory: PlatformAccessory,
-    device: Device,
-    wiz: HomebridgeWizLan
-  ) => {
+  };
+  init = () => {
+    const { wiz, accessory, device } = this;
     const { Characteristic, Service } = wiz;
 
     // Setup the lightbulb service
@@ -75,7 +67,12 @@ const WizBulb: WizAccessory = {
     }
 
     initScenes(wiz, accessory, device);
-  },
-};
+  };
+  getPilot = () => {
+    return new Promise<Pilot>((resolve, reject) => {
+      getPilot(this.wiz, this.accessory, this.device, resolve, reject);
+    });
+  };
+}
 
 export default WizBulb;

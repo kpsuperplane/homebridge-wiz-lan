@@ -41,6 +41,12 @@
         "format": "ipv4",
         "description": "[Optional] Your server's IP address."
       },
+      "refreshPings": {
+        "title": "Refresh Pings",
+        "type": "integer",
+        "default": 0,
+        "description": "[Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off"
+      },
       "devices": {
         "title": "Devices",
         "type": "array",

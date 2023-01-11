@@ -58,7 +58,11 @@ Full configuration options:
       { "host": "192.168.0.3" },
       { "host": "192.168.0.4" },
       // ...
-    ]
+    ],
+
+    // [Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off
+    // Default: 0
+    "refreshPings": 60,
   }
 ```
 
