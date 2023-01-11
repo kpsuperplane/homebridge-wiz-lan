@@ -7,6 +7,7 @@ export interface Config extends PlatformConfig {
   broadcast?: string;
   address?: string;
   devices?: { host?: string; mac?: string; name?: string }[];
+  refreshInterval?: number;
 }
 export interface Device {
   model: string;

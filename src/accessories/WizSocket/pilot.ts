@@ -9,8 +9,9 @@ import {
 import {
   transformOnOff,
 } from "./characteristics";
+import { WizPilot } from "../WizAccessory";
 
-export interface Pilot {
+export interface Pilot extends WizPilot {
   mac: string;
   rssi: number;
   src: string;

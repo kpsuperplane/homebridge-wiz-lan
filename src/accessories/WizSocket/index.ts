@@ -1,26 +1,18 @@
-import { PlatformAccessory } from "homebridge";
 import { WizAccessory } from "..";
-import HomebridgeWizLan from "../../wiz";
 import { Device } from "../../types";
-import {
-  getPilot as _getPilot,
-  setPilot as _setPilot,
-} from "../../util/network";
-import {
-  initOnOff,
-} from "./characteristics";
+import { getPilot, Pilot } from "./pilot";
+import { initOnOff } from "./characteristics";
 
-const WizSocket: WizAccessory = {
-  is: (device: Device) =>
-    ["ESP10_SOCKET_06", "ESP25_SOCKET_01"].some((id) => device.model.includes(id)),
-  getName: (_: Device) => {
+class WizSocket extends WizAccessory<Pilot> {
+  static is = (device: Device) =>
+    ["ESP10_SOCKET_06", "ESP25_SOCKET_01"].some((id) =>
+      device.model.includes(id)
+    );
+  static getName = (_: Device) => {
     return "Wiz Socket";
-  },
-  init: (
-    accessory: PlatformAccessory,
-    device: Device,
-    wiz: HomebridgeWizLan
-  ) => {
+  };
+  init = () => {
+    const { wiz, accessory, device } = this;
     const { Service } = wiz;
 
     // Setup the outlet service
@@ -32,7 +24,12 @@ const WizSocket: WizAccessory = {
 
     // All bulbs support on/off + dimming
     initOnOff(accessory, device, wiz);
-  },
-};
+  };
+  getPilot = () => {
+    return new Promise<Pilot>((resolve, reject) => {
+      getPilot(this.wiz, this.accessory, this.device, resolve, reject);
+    });
+  };
+}
 
 export default WizSocket;
