@@ -62,7 +62,7 @@ Full configuration options:
 
     // [Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off
     // Default: 0
-    "refreshPings": 60,
+    "refreshInterval": 60,
   }
 ```
 

@@ -42,7 +42,7 @@ export default class HomebridgeWizLan {
       });
     });
 
-    this.initRefreshPings();
+    this.initRefreshInterval();
   }
 
   initAccessory(platformAccessory: PlatformAccessory) {
@@ -79,7 +79,7 @@ export default class HomebridgeWizLan {
     return accessory;
   }
 
-  initRefreshPings() {
+  initRefreshInterval() {
     const interval = Number(this.config.refreshInterval ?? 0);
     if (interval === 0) {
       this.log.info("[Refresh] Pings are off");

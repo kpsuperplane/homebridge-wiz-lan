@@ -41,7 +41,7 @@
         "format": "ipv4",
         "description": "[Optional] Your server's IP address."
       },
-      "refreshPings": {
+      "refreshInterval": {
         "title": "Refresh Pings",
         "type": "integer",
         "default": 0,
