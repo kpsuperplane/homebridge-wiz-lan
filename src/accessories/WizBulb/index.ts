@@ -14,7 +14,7 @@ import { initScenes } from "./characteristics/scenes";
 class WizBulb extends WizAccessory<Pilot> {
   static is = (device: Device) =>
     ["SHRGB", "SHDW", "SHTW"].some((id) => device.model.includes(id));
-  static getName = ({ model }: Device) => {
+  static getName = ({ model }: Device): string => {
     if (model.includes("SHRGB")) {
       return "RGB Bulb";
     } else if (model.includes("SHDW")) {

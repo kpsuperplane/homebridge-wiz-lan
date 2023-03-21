@@ -212,10 +212,10 @@ export function initScenes(
 
   // now add any new ones
   missingSceneIds.forEach((sceneId: number) => {
-    const sceneName = SCENES[sceneId][0];
+    const sceneName = SCENES[sceneId][0] as unknown as string;
     const service = accessory.addService(
       Service.InputSource,
-      sceneId,
+      String(sceneId),
       sceneName
     );
     configureInputSource(sceneId, service);
