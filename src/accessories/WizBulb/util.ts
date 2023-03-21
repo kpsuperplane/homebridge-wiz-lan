@@ -2,7 +2,7 @@ import { Device } from "../../types";
 import { Characteristic, Service, WithUUID } from "homebridge";
 
 export function isRGB(device: Device) {
-  return device.model.includes("SHRGB");
+  return device.model.includes("SHRGB") || device.model.includes("DHRGB");
 }
 export function isTW(device: Device) {
   return device.model.includes("SHTW");
