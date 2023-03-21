@@ -3,11 +3,11 @@ Based off of kpsuperplane/homebridge-iotas
 
 ## Currently supports
 - Lightbulbs (RGB, Color Temp, and Single Color) (tested with Wiz 100W Color & Wiz 30W Filaments)
-- Wiz Plugs/Outlets (ESP10_SOCKET_06, ESP25_SOCKET_01)
+- Wiz Plugs/Outlets (ESP10_SOCKET_06, ESP25_SOCKET_01, ESP20_DHRGB_01)
 
 # Installation
 
-Make sure your bulbs are already set up via the Wiz app and you have "Allow Local Communication" set to ON in your settings. 
+Make sure your bulbs are already set up via the Wiz app and you have "Allow Local Communication" set to ON in your settings.
 
 1. Install homebridge using: `npm install -g homebridge`
 2. Install this plugin using: `npm install -g homebridge-wiz-lan`
@@ -70,7 +70,7 @@ Full configuration options:
 
 ### Color
 
-The Wiz bulbs strongly distinguish between RGB color modes and Kelvin color modes, **the latter being significantly brighter**. Unfortunately, HomeKit is not very good at handling both at the same time, [yielding weird errors if you try to add both characteristics](https://github.com/home-assistant/home-assistant/pull/30756). 
+The Wiz bulbs strongly distinguish between RGB color modes and Kelvin color modes, **the latter being significantly brighter**. Unfortunately, HomeKit is not very good at handling both at the same time, [yielding weird errors if you try to add both characteristics](https://github.com/home-assistant/home-assistant/pull/30756).
 
 Luckily, even if we only enable the color mode, we still get a nice temperature picker. Problem is, the color temperature is given in standard HSV. As such, this app will try to guess which one to best use given a color, and you will notice some significant brightness variance switching between a "temp" hue and a "color" hue.
 
@@ -83,7 +83,7 @@ If a "rhythm" is selected in the Wiz app and `lastStatus` is set to `true`, the 
 Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1
 
 ## Credits
-Thanks to: 
+Thanks to:
 #### [@dotkrnl](https://github.com/dotkrnl)
 [#7 Remove obsolete/invalid parameters from setPilot to fix](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/7)
 
@@ -108,16 +108,16 @@ Thanks to:
 #### [@bwp91](https://github.com/bwp91)
 [#81 Add a config schema form](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81)
 
-#### [@AndrewSverdrup](https://github.com/AndrewSverdrup) 
+#### [@AndrewSverdrup](https://github.com/AndrewSverdrup)
 [#119 Add lastStatus setting so lights remember their setting when turned on](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/119)
 
-#### [@pyrliu](https://github.com/pyrliu) 
+#### [@pyrliu](https://github.com/pyrliu)
 [#118 Added support for Wiz Smart Plug ESP25_SOCKET_01](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/118)
 
 ## Contributing
 
 Mostly built for my own personal use, I'll probably reply to any created issues but probably will not actively support anything outside of the RGB bulbs. If you'd like to make a PR through, <3
- 
+
 Furthermore, feel free to create and modify it on your own per MIT License.
 
 ## How bulbs are discovered

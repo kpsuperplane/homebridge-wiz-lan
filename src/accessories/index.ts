@@ -1,5 +1,5 @@
 export * from "./WizAccessory";
 
-import WizBulb from "./WizBulb";
+import WizLight from "./WizLight";
 import WizSocket from "./WizSocket";
-export default [WizBulb, WizSocket];
+export default [WizLight, WizSocket];

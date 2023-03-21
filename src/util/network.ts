@@ -1,12 +1,12 @@
 import dgram from "dgram";
-import internalIp from "internal-ip";
 import getMac from "getmac";
+import internalIp from "internal-ip";
 
-import HomebridgeWizLan from "../wiz";
-import { Device } from "../types";
-import { makeLogger } from "./logger";
-import { Pilot as BulbPilot } from "../accessories/WizBulb/pilot";
+import { Pilot as BulbPilot } from "../accessories/WizLight/pilot";
 import { Pilot as SocketPilot } from "../accessories/WizSocket/pilot";
+import { Device } from "../types";
+import HomebridgeWizLan from "../wiz";
+import { makeLogger } from "./logger";
 
 function strMac() {
   return getMac().toUpperCase().replace(/:/g, "");
