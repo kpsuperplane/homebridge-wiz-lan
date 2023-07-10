@@ -1,15 +1,15 @@
 import { Socket } from "dgram";
 import {
   API,
+  Characteristic,
   Logger,
   PlatformAccessory,
   Service,
-  Characteristic,
 } from "homebridge";
 
+import Accessories, { WizAccessory } from './accessories';
 import { PLATFORM_NAME, PLUGIN_NAME } from "./constants";
 import { Config, Device } from "./types";
-import Accessories, { WizAccessory } from './accessories';
 import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveryBroadcast } from "./util/network";
 
 export default class HomebridgeWizLan {
@@ -70,7 +70,7 @@ export default class HomebridgeWizLan {
     if (typeof AccessoryClass === 'undefined') {
       this.log.warn(`Unknown device ${device.toString()}, skipping...`);
       return;
-    } 
+    }
 
     const accessory = new AccessoryClass(platformAccessory, device, this);
     accessory.init();
@@ -115,11 +115,20 @@ export default class HomebridgeWizLan {
     if (typeof accessory === 'undefined') {
       this.log.warn(`Unknown device ${device.model.toString()}, skipping...`);
       return;
-    } 
+    }
 
-    const uuid = this.api.hap.uuid.generate(device.mac);
+
     const defaultName = `Wiz ${accessory.getName(device)} ${device.mac}`;
     let name = defaultName
+
+    if (this.config.ignoredDevices?.some(ignoredDevice => ignoredDevice.mac === device.mac || ignoredDevice.host === device.ip)) {
+      this.log.info(`Ignoring device ${name} with ${device.ip} and ${device.mac}...`);
+      return;
+    } else {
+      this.log.debug(`Considering device ${name} with ${device.ip} and ${device.mac}...`);
+    }
+
+    const uuid = this.api.hap.uuid.generate(device.mac);
 
     const existingAccessory = this.accessories.find(
       (accessory) => accessory.UUID === uuid
@@ -162,7 +171,7 @@ export default class HomebridgeWizLan {
       this.log.info(`Updating accessory: ${name}${name == existingAccessory.displayName ? "" : ` [formerly ${existingAccessory.displayName}]`}`);
       existingAccessory.displayName = name;
       this.api.updatePlatformAccessories([existingAccessory]);
-      // try initializing again in case it didn't the last time 
+      // try initializing again in case it didn't the last time
       // (e.g. platform upgrade)
       this.initAccessory(existingAccessory);
     }
