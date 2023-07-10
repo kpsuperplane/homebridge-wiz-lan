@@ -14,8 +14,7 @@ import { bindSocket, createSocket, registerDiscoveryHandler, sendDiscoveryBroadc
 
 export default class HomebridgeWizLan {
   public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap
-    .Characteristic;
+  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -52,15 +51,9 @@ export default class HomebridgeWizLan {
       return;
     }
 
-
     const device = platformAccessory.context as Device;
 
-    if (this.config.ignoredDevices?.some(ignoredDevice => ignoredDevice.mac === device.mac || ignoredDevice.host === device.ip)) {
-      this.log.info(`Ignoring device ${platformAccessory.displayName} with ${platformAccessory.UUID}...`);
-      return;
-    } else {
-      this.log.debug(`Initializing device ${device}...`)
-    }
+    this.log.debug(`Initializing device ${device}...`)
 
     // Skip if it doesn't have the new context schema
     if (typeof device?.model !== "string") {
@@ -107,13 +100,25 @@ export default class HomebridgeWizLan {
    * This function is invoked when homebridge restores cached accessories from disk at startup.
    * It should be used to setup event handlers for characteristics and update respective values.
    */
-  configureAccessory(accessory: PlatformAccessory) {
-    this.log.info("Loading accessory from cache:", accessory.displayName);
+  configureAccessory(platformAccessory: PlatformAccessory) {
+    this.log.info("Loading accessory from cache:", platformAccessory.displayName);
+    if (this.deviceShouldBeIgnored(platformAccessory.context as Device)) {
+      this.log.info(`Unregistering ignored device ${platformAccessory.context}...`);
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
+      return;
+    }
 
-    this.initAccessory(accessory);
-
+    this.initAccessory(platformAccessory);
     // add the restored accessory to the accessories cache so we can track if it has already been registered
-    this.accessories.push(accessory);
+    this.accessories.push(platformAccessory);
+  }
+
+  deviceShouldBeIgnored(device: Device) {
+    if (this.config.ignoredDevices?.some(ignoredDevice => ignoredDevice.mac === device.mac || ignoredDevice.host === device.ip)){
+      this.log.info(`Ignoring device with ${device.ip} and ${device.mac}...`);
+      return true;
+    }
+    return false;
   }
 
   tryAddDevice(device: Device) {
@@ -129,11 +134,8 @@ export default class HomebridgeWizLan {
     const defaultName = `Wiz ${accessory.getName(device)} ${device.mac}`;
     let name = defaultName
 
-    if (this.config.ignoredDevices?.some(ignoredDevice => ignoredDevice.mac === device.mac || ignoredDevice.host === device.ip)) {
-      this.log.info(`Ignoring device ${name} with ${device.ip} and ${device.mac}...`);
+    if (this.deviceShouldBeIgnored(device)) {
       return;
-    } else {
-      this.log.debug(`Considering device ${name} with ${device.ip} and ${device.mac}...`);
     }
 
     const uuid = this.api.hap.uuid.generate(device.mac);
@@ -163,7 +165,9 @@ export default class HomebridgeWizLan {
       // create a new accessory
       const accessory = new this.api.platformAccessory(name, uuid);
       accessory.context = device;
-
+      if (this.deviceShouldBeIgnored(device)) {
+        return;
+      }
       this.log.info("Adding new accessory:", name);
 
       this.initAccessory(accessory);
@@ -176,6 +180,9 @@ export default class HomebridgeWizLan {
       ]);
     } else {
       existingAccessory.context = device;
+      if (this.deviceShouldBeIgnored(device)) {
+        return;
+      }
       this.log.info(`Updating accessory: ${name}${name == existingAccessory.displayName ? "" : ` [formerly ${existingAccessory.displayName}]`}`);
       existingAccessory.displayName = name;
       this.api.updatePlatformAccessories([existingAccessory]);
