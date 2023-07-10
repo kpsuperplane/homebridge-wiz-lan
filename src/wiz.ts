@@ -52,7 +52,13 @@ export default class HomebridgeWizLan {
       return;
     }
 
+
     const device = platformAccessory.context as Device;
+
+    if (this.config.ignoredDevices?.some(ignoredDevice => ignoredDevice.mac === device.mac || ignoredDevice.host === device.ip)) {
+      this.log.info(`Ignoring device ${platformAccessory.displayName} with ${platformAccessory.UUID}...`);
+      return;
+    }
 
     // Skip if it doesn't have the new context schema
     if (typeof device?.model !== "string") {
