@@ -103,7 +103,8 @@ export default class HomebridgeWizLan {
   configureAccessory(platformAccessory: PlatformAccessory) {
     this.log.info("Loading accessory from cache:", platformAccessory.displayName);
     if (this.deviceShouldBeIgnored(platformAccessory.context as Device)) {
-      this.log.info(`Unregistering ignored device ${platformAccessory.context}...`);
+      this.log.info(`Unregistering ignored device ${JSON.stringify(platformAccessory.context)}...`);
+      // This makes HB crash, BUT it removes the accessory from the cache
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
       return;
     }
