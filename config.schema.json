@@ -33,7 +33,7 @@
         "title": "Broadcast Address",
         "type": "string",
         "format": "ipv4",
-        "description": "[Optional] UDP Broadcast address for bulb discovery."
+        "description": "[Optional] UDP Broadcast address for device discovery."
       },
       "address": {
         "title": "Server Address",
@@ -62,6 +62,25 @@
             "name": {
               "title": "Device Name",
               "type": "string"
+            },
+            "mac": {
+              "title": "Device MAC",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ignoredDevices": {
+        "title": "Ignored Devices",
+        "type": "array",
+        "description": "[Optional] List of devices to ignore",
+        "items": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "title": "Device IP",
+              "type": "string",
+              "format": "ipv4"
             },
             "mac": {
               "title": "Device MAC",
