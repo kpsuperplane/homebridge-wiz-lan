@@ -88,7 +88,7 @@ export default class HomebridgeWizLan {
       this.log.info(`[Refresh] Setting up ping for every ${interval} seconds`);
       setInterval(() => {
         const accessories = Object.values(this.initializedAccessories);
-        this.log.info(`[Refresh] Pinging ${accessories.length} accessories...`);
+        this.log.debug(`[Refresh] Pinging ${accessories.length} accessories...`);
         for (const accessory of accessories) {
           accessory.getPilot().catch((error) => this.log.error(error));
         }
