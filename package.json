@@ -1,5 +1,5 @@
 {
-  "name": "@chanconrad/homebridge-wiz-lan",
+  "name": "homebridge-wiz-lan",
   "version": "3.2.8",
   "description": "A homebridge plugin to control Wiz Lights",
   "main": "dist/index.js",
