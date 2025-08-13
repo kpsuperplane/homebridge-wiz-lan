@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.3.0
+- [FIX] Support for certain sockets that were misclassified as light poles
+- [FEAT] Support Homebridge 2.0
+
 ## 3.2.1
 - [FIX] Fixes the dimming math to correctly map 0% -> 10% 
 - [FIX] Handles bulb not sending a brightness value, defaults to the on/off state of the bulb
