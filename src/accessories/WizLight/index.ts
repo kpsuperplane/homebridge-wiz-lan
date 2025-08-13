@@ -10,9 +10,7 @@ import { isRGB, isTW } from "./util";
 
 class WizLight extends WizAccessory<Pilot> {
   static is = (device: Device) => {
-    return ["SHRGB", "SHDW", "SHTW"].some((id) => device.model.includes(id)) // Bulbs
-    || device.model.startsWith("ESP20_") // Light Pole
-    || device.model.startsWith("ESP25_"); // LED String lights
+    return ["SHRGB", "SHDW", "SHTW", "MHWRGB", "DHRGB"].some((id) => device.model.includes(id)) // Bulbs and Lights
 
   }
   static getName = ({ model }: Device): string => {

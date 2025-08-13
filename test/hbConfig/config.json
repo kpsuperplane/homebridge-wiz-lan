@@ -1,0 +1,21 @@
+{
+    "bridge": {
+        "name": "PluginTemplate",
+        "username": "AA:BB:CC:DD:EE:FF",
+        "port": 51826,
+        "pin": "031-45-154"
+    },
+    "description": "HomeBridge HTTP Status Control",
+    "plugins": [
+        "homebridge-wiz-lan",
+        "homebridge-config-ui-x"
+    ],
+    "platforms": [
+        {
+            "platform": "WizSmarthome",
+            "name": "WizSmarthome",
+            "debug": true
+        }
+    ],
+    "accessories": []
+}

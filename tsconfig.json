@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "module": "commonjs",
-    "lib": ["ES2015", "ES2016", "ES2017", "ES2018"],
+    "target": "ES2020",
+    "module": "NodeNext",
+    "lib": ["ES2020"],
     "sourceMap": true,
     "rootDir": "src",
     "outDir": "dist",
-
+    "moduleResolution": "nodenext",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
