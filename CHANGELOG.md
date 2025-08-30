@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.3.2
+- [FEAT] Experimental support for Light Strips
+
 ## 3.3.0
 - [FIX] Support for certain sockets that were misclassified as light poles
 - [FEAT] Support Homebridge 2.0
