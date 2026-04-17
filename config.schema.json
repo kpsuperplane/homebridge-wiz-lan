@@ -47,6 +47,19 @@
         "default": 0,
         "description": "[Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off"
       },
+      "reportOffline": {
+        "title": "Report Unreachable Bulbs",
+        "type": "boolean",
+        "default": false,
+        "description": "[Optional] When a bulb stops responding to getPilot requests, surface it to HomeKit as 'Not Responding' instead of silently replaying the last known state. Requires refreshInterval > 0 to detect offline bulbs in the background."
+      },
+      "offlineThreshold": {
+        "title": "Offline Threshold",
+        "type": "integer",
+        "default": 3,
+        "minimum": 1,
+        "description": "[Optional] Number of consecutive missed responses before a bulb is marked as unreachable. Only applies when 'Report Unreachable Bulbs' is on."
+      },
       "devices": {
         "title": "Devices",
         "type": "array",

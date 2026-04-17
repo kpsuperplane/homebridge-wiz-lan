@@ -6,6 +6,7 @@ import {
   getPilot as _getPilot,
   setPilot as _setPilot,
 } from "../../util/network";
+import { isOffline, recordHit, recordMiss } from "../../util/reachability";
 import {
   clampRgb,
   colorTemperature2rgb,
@@ -127,6 +128,8 @@ export function getPilot(
       return;
     }
 
+    recordHit(device.mac);
+
     const old = cachedPilot[device.mac];
     if (
       typeof old !== "undefined" &&
@@ -138,11 +141,18 @@ export function getPilot(
     ) {
       disabledAdaptiveLightingCallback[device.mac]?.();
     }
+    // Filter out `undefined` fields from the device reply before merging —
+    // some scenes (e.g. sceneId 14 nightlight) omit `dimming` entirely, and
+    // a naked spread would clobber the default below with `undefined`,
+    // producing NaN brightness in HomeKit (issues #96/#101/#143/#159).
+    const pilotDefined = Object.fromEntries(
+      Object.entries(pilot).filter(([, v]) => v !== undefined),
+    ) as Partial<Pilot>;
     cachedPilot[device.mac] = {
       // if no dimming info provided, use the last known on/off state
-      dimming: (pilot.state ?? old.state) ? 100 : 10,
-      ...pilot
-    };
+      dimming: (pilot.state ?? old?.state) ? 100 : 10,
+      ...pilotDefined,
+    } as Pilot;
     if (shouldCallback) {
       onSuccess(pilot);
     } else {
@@ -150,7 +160,22 @@ export function getPilot(
     }
   };
   const timeout = setTimeout(() => {
-    if (device.mac in cachedPilot) {
+    const misses = recordMiss(device.mac);
+    const threshold = Math.max(1, Number(wiz.config.offlineThreshold ?? 3));
+    const reportOffline = wiz.config.reportOffline === true;
+    if (reportOffline && isOffline(device.mac, threshold)) {
+      // Surface the bulb as unreachable so HomeKit shows "Not Responding".
+      // Dropping the cache entry forces the next get to re-attempt fresh.
+      delete cachedPilot[device.mac];
+      onDone(
+        new Error(
+          `Device ${device.mac} unreachable (${misses} consecutive misses)`,
+        ),
+        undefined as any,
+      );
+    } else if (device.mac in cachedPilot) {
+      // Legacy behaviour: replay the cached state. Preserves backward
+      // compatibility when `reportOffline` is left at its default (off).
       onDone(null, cachedPilot[device.mac]);
     } else {
       onDone(new Error("No response within 1s"), undefined as any);
@@ -202,7 +227,14 @@ export function setPilot(
   });
 }
 
-export function pilotToColor(pilot: Pilot) {
+export function pilotToColor(pilot: Pilot | undefined) {
+  // Neutral-white fallback for callers that pass in an empty cache entry —
+  // e.g. updateColorTemp() / color set handlers invoked after a getPilot
+  // timeout wiped `cachedPilot[mac]`. Avoids the "Cannot read properties of
+  // undefined (reading 'temp')" crash (issue #145).
+  if (!pilot) {
+    return { hue: 0, saturation: 0, temp: 2700 };
+  }
   if (typeof pilot.temp === "number") {
     return {
       ...rgbToHsv(colorTemperature2rgb(Number(pilot.temp))),

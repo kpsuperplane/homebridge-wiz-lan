@@ -63,6 +63,17 @@ Full configuration options:
     // [Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off
     // Default: 0
     "refreshInterval": 60,
+
+    // [Optional] Surface unresponsive bulbs to HomeKit as "Not Responding"
+    // instead of silently replaying their last known state. Requires
+    // refreshInterval > 0 to detect offline bulbs in the background.
+    // Default: false
+    "reportOffline": false,
+
+    // [Optional] Number of consecutive missed getPilot responses before a
+    // bulb is marked as unreachable. Only applies when reportOffline is true.
+    // Default: 3
+    "offlineThreshold": 3,
   }
 ```
 
@@ -78,6 +89,9 @@ Luckily, even if we only enable the color mode, we still get a nice temperature 
 
 ### Last Status (config setting)
 If a "rhythm" is selected in the Wiz app and `lastStatus` is set to `true`, the lights will always turn on to the rhythm. When rhythms are disabled, lights turn on to whatever setting they had when last turned off.
+
+### Report Offline (config setting)
+By default, when a bulb stops responding to UDP requests the plugin silently replays its last known state — so a bulb that's been unplugged or dropped off the network still appears fully operational in HomeKit. Setting `reportOffline: true` changes this: after `offlineThreshold` consecutive missed responses the accessory is surfaced to HomeKit as "Not Responding", and a successful reply clears the state immediately. Pair with `refreshInterval > 0` so background pings can detect unreachable bulbs even when HomeKit isn't actively reading them. When `refreshInterval > 0`, the plugin also re-broadcasts discovery on each tick so bulbs that return to the network (or get a new DHCP lease) are re-learned automatically.
 
 # Development
 Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1

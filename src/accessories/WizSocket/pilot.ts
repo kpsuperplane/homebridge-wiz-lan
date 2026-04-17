@@ -6,6 +6,7 @@ import {
   getPilot as _getPilot,
   setPilot as _setPilot,
 } from "../../util/network";
+import { isOffline, recordHit, recordMiss } from "../../util/reachability";
 import {
   transformOnOff,
 } from "./characteristics";
@@ -62,6 +63,7 @@ export function getPilot(
       delete cachedPilot[device.mac];
       return;
     }
+    recordHit(device.mac);
     cachedPilot[device.mac] = pilot;
     if (shouldCallback) {
       onSuccess(pilot);
@@ -70,7 +72,18 @@ export function getPilot(
     }
   };
   const timeout = setTimeout(() => {
-    if (device.mac in cachedPilot) {
+    const misses = recordMiss(device.mac);
+    const threshold = Math.max(1, Number(wiz.config.offlineThreshold ?? 3));
+    const reportOffline = wiz.config.reportOffline === true;
+    if (reportOffline && isOffline(device.mac, threshold)) {
+      delete cachedPilot[device.mac];
+      onDone(
+        new Error(
+          `Device ${device.mac} unreachable (${misses} consecutive misses)`,
+        ),
+        undefined as any,
+      );
+    } else if (device.mac in cachedPilot) {
       onDone(null, cachedPilot[device.mac]);
     } else {
       onDone(new Error("No response within 1s"), undefined as any);

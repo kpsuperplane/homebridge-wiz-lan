@@ -9,6 +9,8 @@ export interface Config extends PlatformConfig {
   devices?: { host?: string; mac?: string; name?: string }[];
   ignoredDevices?: { host?: string; mac?: string }[];
   refreshInterval?: number;
+  reportOffline?: boolean;
+  offlineThreshold?: number;
 }
 export interface Device {
   model: string;
