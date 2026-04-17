@@ -197,7 +197,16 @@ export default class HomebridgeWizLan {
       if (this.deviceShouldBeIgnored(device)) {
         return;
       }
-      this.log.info(`Updating accessory: ${name}${name == existingAccessory.displayName ? "" : ` [formerly ${existingAccessory.displayName}]`}`);
+      // Only log at info when the display name actually changed — otherwise
+      // a periodic rediscovery (see initRefreshInterval) would spam one
+      // "Updating accessory: …" line per configured device per tick.
+      const renamed = name !== existingAccessory.displayName;
+      const msg = `Updating accessory: ${name}${renamed ? ` [formerly ${existingAccessory.displayName}]` : ""}`;
+      if (renamed) {
+        this.log.info(msg);
+      } else {
+        this.log.debug(msg);
+      }
       existingAccessory.displayName = name;
       this.api.updatePlatformAccessories([existingAccessory]);
       // try initializing again in case it didn't the last time

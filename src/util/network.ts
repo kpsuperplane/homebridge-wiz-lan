@@ -240,7 +240,11 @@ export function sendDiscoveryBroadcast(service: HomebridgeWizLan) {
   const { ADDRESS, MAC, BROADCAST } = getNetworkConfig(service);
 
   const log = makeLogger(service, "Discovery");
-  log.info(`Sending discovery UDP broadcast to ${BROADCAST}:${BROADCAST_PORT}`);
+  // Debug-level because this now fires every `refreshInterval` tick as well
+  // as on startup; at info it flooded the log with one line per listed
+  // device per tick. Same rationale as the refresh-ping log downgrade
+  // in #141.
+  log.debug(`Sending discovery UDP broadcast to ${BROADCAST}:${BROADCAST_PORT}`);
 
   // Send generic discovery message
   service.socket.send(
@@ -253,7 +257,7 @@ export function sendDiscoveryBroadcast(service: HomebridgeWizLan) {
   if (Array.isArray(service.config.devices)) {
     for (const device of service.config.devices) {
       if (device.host) {
-        log.info(`Sending discovery UDP broadcast to ${device.host}:${BROADCAST_PORT}`);
+        log.debug(`Sending discovery UDP broadcast to ${device.host}:${BROADCAST_PORT}`);
         service.socket.send(
           `{"method":"registration","params":{"phoneMac":"${MAC}","register":false,"phoneIp":"${ADDRESS}"}}`,
           BROADCAST_PORT,
