@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "WizSmarthome",
+  "pluginAlias": "WizSmarthomeV2",
   "pluginType": "platform",
   "singular":true,
   "schema": {
@@ -8,7 +8,7 @@
       "name": {
         "title": "Name",
         "type": "string",
-        "default": "WizSmarthome"
+        "default": "WizSmarthomeV2"
       },
       "port": {
         "title": "Port",
@@ -42,10 +42,25 @@
         "description": "[Optional] Your server's IP address."
       },
       "refreshInterval": {
-        "title": "Refresh Pings",
+        "title": "Refresh Interval (seconds)",
         "type": "integer",
         "default": 0,
-        "description": "[Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off"
+        "minimum": 0,
+        "description": "[Optional] Ping every known device on this interval to keep state in sync. Specify in seconds, 0 = off."
+      },
+      "discoveryInterval": {
+        "title": "Discovery Interval (seconds)",
+        "type": "integer",
+        "default": 0,
+        "minimum": 0,
+        "description": "[Optional] Re-broadcast discovery periodically to detect devices added after startup. Specify in seconds, 0 = off."
+      },
+      "pingFailuresBeforeOffline": {
+        "title": "Ping Failures Before Offline",
+        "type": "integer",
+        "default": 3,
+        "minimum": 1,
+        "description": "[Optional] Number of consecutive missed pings before a device is marked as 'No Response' in Apple Home. Requires Refresh Interval > 0."
       },
       "reportOffline": {
         "title": "Report Unreachable Bulbs",

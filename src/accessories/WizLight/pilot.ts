@@ -1,12 +1,12 @@
 import { PlatformAccessory } from "homebridge";
 
 import HomebridgeWizLan from "../../wiz";
+import { isOffline, recordFailure, recordSuccess } from "../../util/offline";
 import { Device } from "../../types";
 import {
   getPilot as _getPilot,
   setPilot as _setPilot,
 } from "../../util/network";
-import { isOffline, recordHit, recordMiss } from "../../util/reachability";
 import {
   clampRgb,
   colorTemperature2rgb,
@@ -51,7 +51,7 @@ export const disabledAdaptiveLightingCallback: {
   [mac: string]: () => void;
 } = {};
 
-function updatePilot(
+export function updatePilot(
   wiz: HomebridgeWizLan,
   accessory: PlatformAccessory,
   device: Device,
@@ -112,23 +112,44 @@ export function getPilot(
   onSuccess: (pilot: Pilot) => void,
   onError: (error: Error) => void
 ) {
-  const { Service } = wiz;
-  const service = accessory.getService(Service.Lightbulb)!;
-  let callbacked = false;
-  const onDone = (error: Error | null, pilot: Pilot) => {
-    const shouldCallback = !callbacked;
-    callbacked = true;
+  const deviceIsOffline = isOffline(device.mac);
+
+  if (deviceIsOffline) {
+    // Respond immediately so HomeKit doesn't wait for the UDP timeout
+    onError(new wiz.api.hap.HapStatusError(wiz.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE));
+    // Fall through to still probe the device so recovery is detected
+  }
+
+  _getPilot<Pilot>(wiz, device, (error, pilot) => {
     if (error !== null) {
-      if (shouldCallback) {
-        onError(error);
-      } else {
-        service.getCharacteristic(wiz.Characteristic.On).updateValue(error);
+      const threshold = wiz.config.pingFailuresBeforeOffline ?? 3;
+      const newlyOffline = recordFailure(device.mac, threshold);
+      if (newlyOffline) {
+        wiz.log.warn(`[${device.mac}] Device is now offline (${threshold} missed pings)`);
+        updatePilot(wiz, accessory, device, new wiz.api.hap.HapStatusError(wiz.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE));
+        if (!deviceIsOffline) {
+          onError(new wiz.api.hap.HapStatusError(wiz.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE));
+        }
+        return;
       }
-      delete cachedPilot[device.mac];
+      if (deviceIsOffline) {
+        // Still offline — already responded above, nothing else to do
+        return;
+      }
+      const cached = cachedPilot[device.mac];
+      if (cached) {
+        wiz.log.warn(`[getPilot] No response from ${device.mac} within 1s, using cached state`);
+        onSuccess(cached);
+      } else {
+        onError(error);
+      }
       return;
     }
 
-    recordHit(device.mac);
+    const cameBack = recordSuccess(device.mac);
+    if (cameBack) {
+      wiz.log.info(`[${device.mac}] Device is back online`);
+    }
 
     const old = cachedPilot[device.mac];
     if (
@@ -141,49 +162,17 @@ export function getPilot(
     ) {
       disabledAdaptiveLightingCallback[device.mac]?.();
     }
-    // Filter out `undefined` fields from the device reply before merging —
-    // some scenes (e.g. sceneId 14 nightlight) omit `dimming` entirely, and
-    // a naked spread would clobber the default below with `undefined`,
-    // producing NaN brightness in HomeKit (issues #96/#101/#143/#159).
-    const pilotDefined = Object.fromEntries(
-      Object.entries(pilot).filter(([, v]) => v !== undefined),
-    ) as Partial<Pilot>;
     cachedPilot[device.mac] = {
-      // if no dimming info provided, use the last known on/off state
       dimming: (pilot.state ?? old?.state) ? 100 : 10,
-      ...pilotDefined,
-    } as Pilot;
-    if (shouldCallback) {
-      onSuccess(pilot);
-    } else {
+      ...pilot
+    };
+    if (cameBack) {
+      // Push fresh state to HomeKit so "No Response" clears immediately
       updatePilot(wiz, accessory, device, pilot);
     }
-  };
-  const timeout = setTimeout(() => {
-    const misses = recordMiss(device.mac);
-    const threshold = Math.max(1, Number(wiz.config.offlineThreshold ?? 3));
-    const reportOffline = wiz.config.reportOffline === true;
-    if (reportOffline && isOffline(device.mac, threshold)) {
-      // Surface the bulb as unreachable so HomeKit shows "Not Responding".
-      // Dropping the cache entry forces the next get to re-attempt fresh.
-      delete cachedPilot[device.mac];
-      onDone(
-        new Error(
-          `Device ${device.mac} unreachable (${misses} consecutive misses)`,
-        ),
-        undefined as any,
-      );
-    } else if (device.mac in cachedPilot) {
-      // Legacy behaviour: replay the cached state. Preserves backward
-      // compatibility when `reportOffline` is left at its default (off).
-      onDone(null, cachedPilot[device.mac]);
-    } else {
-      onDone(new Error("No response within 1s"), undefined as any);
+    if (!deviceIsOffline) {
+      onSuccess(pilot);
     }
-  }, 1000);
-  _getPilot<Pilot>(wiz, device, (error, pilot) => {
-    clearTimeout(timeout);
-    onDone(error, pilot);
   });
 }
 
@@ -194,8 +183,13 @@ export function setPilot(
   pilot: Partial<Pilot>,
   callback: (error: Error | null) => void
 ) {
+  if (isOffline(device.mac)) {
+    callback(new wiz.api.hap.HapStatusError(wiz.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE));
+    return;
+  }
   const oldPilot = cachedPilot[device.mac];
   if (typeof oldPilot == "undefined") {
+    callback(new Error(`No cached state for ${device.mac}`));
     return;
   }
   const newPilot = {
@@ -204,6 +198,8 @@ export function setPilot(
     dimming: oldPilot.dimming ?? 10,
     ...pilot,
   };
+  const isStateOnlyUpdate =
+    Object.keys(pilot).length === 1 && typeof pilot.state === "boolean";
 
   if (pilot.sceneId !== undefined) {
     newPilot.temp = undefined;
@@ -219,7 +215,9 @@ export function setPilot(
     ...oldPilot,
     ...newPilot,
   } as any;
-  return _setPilot(wiz, device, newPilot, (error) => {
+  const outboundPilot =
+    wiz.config.lastStatus && isStateOnlyUpdate ? { state: pilot.state } : newPilot;
+  return _setPilot(wiz, device, outboundPilot, (error) => {
     if (error !== null) {
       cachedPilot[device.mac] = oldPilot;
     }
@@ -227,14 +225,7 @@ export function setPilot(
   });
 }
 
-export function pilotToColor(pilot: Pilot | undefined) {
-  // Neutral-white fallback for callers that pass in an empty cache entry —
-  // e.g. updateColorTemp() / color set handlers invoked after a getPilot
-  // timeout wiped `cachedPilot[mac]`. Avoids the "Cannot read properties of
-  // undefined (reading 'temp')" crash (issue #145).
-  if (!pilot) {
-    return { hue: 0, saturation: 0, temp: 2700 };
-  }
+export function pilotToColor(pilot: Pilot) {
   if (typeof pilot.temp === "number") {
     return {
       ...rgbToHsv(colorTemperature2rgb(Number(pilot.temp))),

@@ -1,6 +1,6 @@
 {
-  "name": "homebridge-wiz-lan",
-  "version": "3.3.4",
+  "name": "homebridge-wiz-lan-v2",
+  "version": "0.2.4",
   "description": "A homebridge plugin to control Wiz Lights",
   "main": "dist/index.js",
   "keywords": [
@@ -25,20 +25,20 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kpsuperplane/homebridge-wiz-lan.git"
+    "url": "git+https://github.com/ulm0/homebridge-wiz-lan-v2.git"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",
-    "homebridge": "^2.0.0-beta.70",
+    "homebridge": "^2.0.1",
     "nodemon": "^3.1.11",
     "rimraf": "^6.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "bugs": {
-    "url": "https://github.com/kpsuperplane/homebridge-wiz-lan/issues"
+    "url": "https://github.com/ulm0/homebridge-wiz-lan-v2/issues"
   },
-  "homepage": "https://github.com/kpsuperplane/homebridge-wiz-lan#readme",
+  "homepage": "https://github.com/ulm0/homebridge-wiz-lan-v2#readme",
   "dependencies": {
     "getmac": "^6.6.0",
     "internal-ip": "^9.0.0"

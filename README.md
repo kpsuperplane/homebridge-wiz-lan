@@ -1,4 +1,4 @@
-# homebridge-wiz-lan
+# homebridge-wiz-lan-v2
 Based off of kpsuperplane/homebridge-iotas
 
 ## Currently supports
@@ -18,8 +18,8 @@ Simple Configuration:
 
 ```javascript
 {
-    "platform": "WizSmarthome",
-    "name": "WizSmarthome",
+    "platform": "WizSmarthomeV2",
+    "name": "WizSmarthomeV2",
 }
 ```
 
@@ -27,7 +27,7 @@ Full configuration options:
 
 ```javascript
 {
-    "platform": "WizSmarthome",
+    "platform": "WizSmarthomeV2",
     "name": "Wiz",
 
     // [Optional] Port for bulbs to connect to your server
@@ -64,16 +64,15 @@ Full configuration options:
     // Default: 0
     "refreshInterval": 60,
 
-    // [Optional] Surface unresponsive bulbs to HomeKit as "Not Responding"
-    // instead of silently replaying their last known state. Requires
-    // refreshInterval > 0 to detect offline bulbs in the background.
-    // Default: false
-    "reportOffline": false,
+    // [Optional] Re-broadcast the discovery message periodically to detect devices added after startup. Specify in seconds, 0 = off
+    // Default: 0
+    "discoveryInterval": 30,
 
-    // [Optional] Number of consecutive missed getPilot responses before a
-    // bulb is marked as unreachable. Only applies when reportOffline is true.
+    // [Optional] Number of consecutive missed pings before a device is marked offline and shown as "No Response" in Apple Home.
+    // The plugin continues probing the device in the background — when it responds again it is automatically restored in Apple Home.
+    // Note: recovery detection requires refreshInterval > 0, otherwise the device will only recover when HomeKit actively queries it.
     // Default: 3
-    "offlineThreshold": 3,
+    "pingFailuresBeforeOffline": 3,
   }
 ```
 
@@ -89,9 +88,6 @@ Luckily, even if we only enable the color mode, we still get a nice temperature 
 
 ### Last Status (config setting)
 If a "rhythm" is selected in the Wiz app and `lastStatus` is set to `true`, the lights will always turn on to the rhythm. When rhythms are disabled, lights turn on to whatever setting they had when last turned off.
-
-### Report Offline (config setting)
-By default, when a bulb stops responding to UDP requests the plugin silently replays its last known state — so a bulb that's been unplugged or dropped off the network still appears fully operational in HomeKit. Setting `reportOffline: true` changes this: after `offlineThreshold` consecutive missed responses the accessory is surfaced to HomeKit as "Not Responding", and a successful reply clears the state immediately. Pair with `refreshInterval > 0` so background pings can detect unreachable bulbs even when HomeKit isn't actively reading them. When `refreshInterval > 0`, the plugin also re-broadcasts discovery on each tick so bulbs that return to the network (or get a new DHCP lease) are re-learned automatically.
 
 # Development
 Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1
@@ -127,9 +123,6 @@ Thanks to:
 
 #### [@pyrliu](https://github.com/pyrliu)
 [#118 Added support for Wiz Smart Plug ESP25_SOCKET_01](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/118)
-
-#### [@dhananjaysathe](https://github.com/dhananjaysathe)
-[#173 Surface unreachable bulbs as 'Not Responding' via HAP](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/173)
 
 ## Contributing
 

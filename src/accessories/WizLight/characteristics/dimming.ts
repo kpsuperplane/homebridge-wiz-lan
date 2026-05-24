@@ -14,8 +14,8 @@ import { getPilot, Pilot, setPilot } from "../pilot";
 
 export function transformDimming(pilot: Pilot) {
   // do the reverse of the below
-  // 10% <-> 100% --> 1% <-> 100% 
-  return Math.floor(Number(pilot.dimming) * 1.1) - 10;
+  // 10% <-> 100% --> 1% <-> 100%
+  return Math.max(0, Math.floor(Number(pilot.dimming) * 1.1) - 10);
 }
 export function initDimming(
   accessory: PlatformAccessory,

@@ -43,6 +43,8 @@ function initHue(
     .on(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+        const cached = cachedPilot[device.mac];
+        if (!cached) { next(new Error(`No cached state for ${device.mac}`)); return; }
         setPilot(
           wiz,
           accessory,
@@ -51,7 +53,7 @@ function initHue(
             temp: undefined,
             ...hsvToColor(
               Number(newValue) / 360,
-              pilotToColor(cachedPilot[device.mac]).saturation / 100,
+              pilotToColor(cached).saturation / 100,
               wiz
             ),
           },
@@ -85,6 +87,8 @@ function initSaturation(
     .on(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+        const cached = cachedPilot[device.mac];
+        if (!cached) { next(new Error(`No cached state for ${device.mac}`)); return; }
         setPilot(
           wiz,
           accessory,
@@ -92,7 +96,7 @@ function initSaturation(
           {
             temp: undefined,
             ...hsvToColor(
-              pilotToColor(cachedPilot[device.mac]).hue / 360,
+              pilotToColor(cached).hue / 360,
               Number(newValue) / 100,
               wiz
             ),
