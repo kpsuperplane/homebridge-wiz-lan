@@ -18,8 +18,8 @@ Simple Configuration:
 
 ```javascript
 {
-    "platform": "WizSmarthomeV2",
-    "name": "WizSmarthomeV2",
+    "platform": "WizSmarthome",
+    "name": "WizSmarthome",
 }
 ```
 
@@ -27,7 +27,7 @@ Full configuration options:
 
 ```javascript
 {
-    "platform": "WizSmarthomeV2",
+    "platform": "WizSmarthome",
     "name": "Wiz",
 
     // [Optional] Port for bulbs to connect to your server

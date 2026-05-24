@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "WizSmarthomeV2",
+  "pluginAlias": "WizSmarthome",
   "pluginType": "platform",
   "singular":true,
   "schema": {
@@ -8,7 +8,7 @@
       "name": {
         "title": "Name",
         "type": "string",
-        "default": "WizSmarthomeV2"
+        "default": "WizSmarthome"
       },
       "port": {
         "title": "Port",
