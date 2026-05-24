@@ -1,4 +1,4 @@
-# homebridge-wiz-lan-v2
+# homebridge-wiz-lan
 Based off of kpsuperplane/homebridge-iotas
 
 ## Currently supports
