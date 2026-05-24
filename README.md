@@ -193,9 +193,7 @@ Upstream contributors (see [CHANGELOG.md](./CHANGELOG.md) for the full list):
 - [@bwp91](https://github.com/bwp91) — [#81](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81) config schema form
 - [@AndrewSverdrup](https://github.com/AndrewSverdrup) — [#119](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/119) `lastStatus` setting
 - [@pyrliu](https://github.com/pyrliu) — [#118](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/118) ESP25_SOCKET_01 support
-- [@dhananjaysathe](https://github.com/dhananjaysathe) — [#173](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/173) surface unreachable bulbs as "Not Responding"
-- [@dhananjaysathe](https://github.com/dhananjaysathe)
-[#173 Surface unreachable bulbs as 'Not Responding' via HAP](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/173)
+- [@dhananjaysathe](https://github.com/dhananjaysathe) — [#173](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/173) Surface unreachable bulbs as 'Not Responding' via HAP
 
 ## Contributing
 
