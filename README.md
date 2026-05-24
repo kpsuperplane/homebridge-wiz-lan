@@ -1,204 +1,168 @@
 # homebridge-wiz-lan
+Based off of kpsuperplane/homebridge-iotas
 
-A Homebridge plugin to control Wiz devices over your local network (no cloud required).
+## Currently supports
+- Lightbulbs (RGB, Tunable White, Dimmer, Light Strips, LED String Lights, Light Poles)
+- Wiz Plugs/Outlets (ESP10_SOCKET_06, ESP25_SOCKET_01)
 
-Fork of [kpsuperplane/homebridge-wiz-lan](https://github.com/kpsuperplane/homebridge-wiz-lan) with additional fixes and features.
+# Installation
 
-## Supported Devices
+Make sure your bulbs are already set up via the Wiz app and you have "Allow Local Communication" set to ON in your settings.
 
-The plugin auto-discovers devices on your LAN and matches them by module name.
+1. Install homebridge using: `npm install -g homebridge`
+2. Install this plugin using: `npm install -g homebridge-wiz-lan`
+3. Update your configuration file. See the sample below.
 
-### Lights (exposed as `Lightbulb`)
+# Configuration
+Simple Configuration:
 
-| Module name contains | HomeKit name | Capabilities |
-|---|---|---|
-| `SHRGB` | RGB Bulb | On/Off · Brightness · Color Temp · Hue/Saturation · Adaptive Lighting · Scenes |
-| `SHTW` | Tunable White Bulb | On/Off · Brightness · Color Temp · Adaptive Lighting · Scenes |
-| `SHDW` | Dimmer Bulb | On/Off · Brightness · Scenes |
-| `MHWRGB` | LED String Lights | Same as RGB Bulb |
-| `DHRGB` | Light Pole | Same as RGB Bulb |
-| `MHORGB` | Light Strip | Same as RGB Bulb |
-
-### Sockets (exposed as `Outlet`)
-
-| Module name contains | HomeKit name | Capabilities |
-|---|---|---|
-| `ESP10_SOCKET_06` | Wiz Socket | On/Off |
-| `ESP25_SOCKET_01` | Wiz Socket | On/Off |
-
-> If your device isn't listed, open an issue with its module name (visible in Homebridge debug logs).
-
-## Features
-
-- **Local control** — pure UDP, no cloud, no account required.
-- **Auto-discovery** — broadcasts on startup and (optionally) on a configurable interval to pick up devices added later.
-- **Adaptive Lighting** — automatically enabled for RGB and Tunable White bulbs. Disables itself if you change color/temperature manually, re-enables when HomeKit drives it again.
-- **Scenes** — opt-in via `enableScenes`. Exposes up to 33 Wiz scenes (Ocean, Sunset, Forest, Cozy, Christmas, etc.) as a `Television` service. Scene list is filtered per device type. *Note: enabling scenes disables HomeKit light grouping.*
-- **Instant response** — `getPilot` requests are batched per device so concurrent reads send a single UDP packet. If a bulb doesn't respond within 1 second, the last cached state is returned so HomeKit doesn't stall.
-- **Offline detection** — devices that miss several consecutive pings are surfaced in Apple Home as "No Response" (via `pingFailuresBeforeOffline`). The plugin keeps probing in the background and clears the offline state automatically when the device replies again. Requires `refreshInterval > 0` for proactive recovery.
-- **Per-device custom names** — override the auto-generated display name by entry in `devices[]` (`{ host, mac, name }`).
-- **Ignore list** — keep specific devices out of HomeKit via `ignoredDevices[]`.
-- **Color temperature ↔ RGB hand-off** — when a chosen HSV color falls in a "near-white" range, the plugin sends a Kelvin command instead of RGB so the bulb uses its brighter white LEDs.
-- **Request coalescing** — concurrent `setPilot` writes to the same device are collapsed into a single in-flight UDP packet to reduce network chatter.
-
-## Installation
-
-Make sure your bulbs are already paired with the Wiz app and **"Allow Local Communication"** is ON in your Wiz app settings.
-
-1. Install Homebridge: `npm install -g homebridge`
-2. Install this plugin: `npm install -g homebridge-wiz-lan`
-3. Edit your Homebridge `config.json` (see below).
-
-> This README documents the fork. Installing from npm gives you the upstream release; install from this fork's git source if you want the fork's fixes/features.
-
-## Configuration
-
-Minimal:
-
-```json
+```javascript
 {
-  "platform": "WizSmarthome",
-  "name": "WizSmarthome"
+    "platform": "WizSmarthome",
+    "name": "WizSmarthome",
 }
 ```
 
-Full reference (every option is optional):
+Full configuration options:
 
-```jsonc
+```javascript
 {
-  "platform": "WizSmarthome",
-  "name": "Wiz",
+    "platform": "WizSmarthome",
+    "name": "Wiz",
 
-  // Port the plugin binds to for device replies.
-  // Default: 38900
-  "port": 38900,
+    // [Optional] Port for bulbs to connect to your server
+    // Default: 38900
+    "port": 38900,
 
-  // Expose Wiz scenes (Ocean, Sunset, etc.) as a HomeKit Television service.
-  // WARNING: enabling scenes disables HomeKit light-grouping for that accessory.
-  // Default: false
-  "enableScenes": false,
+    // [Optional] Enable scenes support for your bulbs
+    // Default: false
+    "enableScenes": false,
 
-  // When toggling a bulb on, send only the on/off state so the bulb restores
-  // its last hardware-side settings (rhythms / last color). Only applies to
-  // pure on/off updates — any color/brightness change still goes through.
-  // Default: false
-  "lastStatus": false,
+    // [Optional] Lights turn on with the same settings they had when turned off (light configs in HomeKit are ignored).
+    // Default: false
+    "lastStatus": false,
 
-  // UDP broadcast address used for discovery.
-  // Default: 255.255.255.255
-  "broadcast": "255.255.255.255",
+    // [Optional] UDP Broadcast address for bulb discovery
+    // Default: 255.255.255.255
+    "broadcast": "255.255.255.255",
 
-  // Your Homebridge server's IP. Autodetected if omitted.
-  "address": "192.168.0.1",
+    // [Optional] Your server's IP address
+    // Default: Autodiscovered
+    "address": "192.168.0.1",
 
-  // Manual device list. Useful when broadcast doesn't work (VLANs, mDNS-only nets).
-  // Each entry can optionally pin a `name` (HomeKit display name) and/or `mac`.
-  "devices": [
-    { "host": "192.168.0.2" },
-    { "host": "192.168.0.3", "name": "Living Room Lamp" },
-    { "host": "192.168.0.4", "mac": "AA:BB:CC:DD:EE:FF", "name": "Desk Strip" }
-  ],
+    // [Optional] Manual list of bulbs. `host` is required; `name` overrides
+    // the HomeKit display name, `mac` pins the entry to a specific device.
+    // Default: None
+    "devices": [
+      { "host": "192.168.0.2" },
+      { "host": "192.168.0.3", "name": "Living Room Lamp" },
+      { "host": "192.168.0.4", "mac": "AA:BB:CC:DD:EE:FF", "name": "Desk Strip" },
+      // ...
+    ],
 
-  // Devices to exclude from HomeKit. Match by `host` or `mac`.
-  // Devices already in the Homebridge cache will be unregistered on next start.
-  "ignoredDevices": [
-    { "mac": "AA:BB:CC:DD:EE:FF" },
-    { "host": "192.168.0.99" }
-  ],
+    // [Optional] Devices to exclude from HomeKit. Match by `host` or `mac`.
+    // Devices already in the Homebridge cache are unregistered on next start.
+    // Default: None
+    "ignoredDevices": [
+      { "mac": "AA:BB:CC:DD:EE:FF" },
+      { "host": "192.168.0.99" },
+    ],
 
-  // Periodically poll every known device to keep HomeKit state in sync
-  // and detect offline devices. Seconds, 0 = off.
-  // Default: 0
-  "refreshInterval": 60,
+    // [Optional] Refresh/ping every accessory to get their latest state on an interval. Specify in seconds, 0 = off
+    // Default: 0
+    "refreshInterval": 60,
 
-  // Periodically re-broadcast discovery to pick up devices added after startup.
-  // Also re-pings manually listed `devices[].host`. Seconds, 0 = off.
-  // Default: 0
-  "discoveryInterval": 30,
+    // [Optional] Re-broadcast the discovery message periodically to detect
+    // devices added after startup. Specify in seconds, 0 = off
+    // Default: 0
+    "discoveryInterval": 30,
 
-  // Consecutive missed pings before a device is shown as "No Response" in Apple Home.
-  // The plugin keeps probing in the background; it auto-recovers when the device replies.
-  // Recovery requires `refreshInterval > 0` (otherwise the device only recovers when
-  // HomeKit actively queries it).
-  // Default: 3
-  "pingFailuresBeforeOffline": 3
-}
+    // [Optional] Number of consecutive missed pings before a device is marked
+    // offline and shown as "No Response" in Apple Home. The plugin keeps
+    // probing in the background and clears the state automatically when the
+    // device replies again. Recovery requires refreshInterval > 0, otherwise
+    // the device only recovers when HomeKit actively queries it.
+    // Default: 3
+    "pingFailuresBeforeOffline": 3,
+  }
 ```
 
-## Notes
+## Some Notes
 
-### Color temperature vs RGB
+### Color
 
-Wiz bulbs handle RGB and Kelvin (color temperature) as two distinct modes, and the **Kelvin mode is noticeably brighter** because it drives dedicated white LEDs. HomeKit doesn't let a single service expose both cleanly ([discussion](https://github.com/home-assistant/home-assistant/pull/30756)).
+The Wiz bulbs strongly distinguish between RGB color modes and Kelvin color modes, **the latter being significantly brighter**. Unfortunately, HomeKit is not very good at handling both at the same time, [yielding weird errors if you try to add both characteristics](https://github.com/home-assistant/home-assistant/pull/30756).
 
-The plugin works around this by exposing color (Hue/Saturation), and when the chosen color is "near-white" enough it transparently sends a Kelvin command instead of RGB.
+Luckily, even if we only enable the color mode, we still get a nice temperature picker. Problem is, the color temperature is given in standard HSV. As such, this app will try to guess which one to best use given a color, and you will notice some significant brightness variance switching between a "temp" hue and a "color" hue.
 
-Supported temperature range: **2200 K – 6500 K**. The HomeKit picker covers a wider range; only the segment inside that window actually changes the bulb.
+**In particular, since the Wiz bulbs only support 2200K–6500K, this means that only the top-ish half of the temperature picker is actually bright**
 
-### Brightness floor
+### Last Status (config setting)
+If a "rhythm" is selected in the Wiz app and `lastStatus` is set to `true`, the lights will always turn on to the rhythm. When rhythms are disabled, lights turn on to whatever setting they had when last turned off. Only applies to pure on/off toggles — any brightness/color/temperature change still goes through normally.
 
-The Wiz firmware rejects brightness values below 10 %. HomeKit reports 0–100 %; the plugin maps this onto 10–100 % internally, so HomeKit's 0 % becomes 10 % on the bulb.
-
-### `lastStatus`
-
-When `lastStatus` is `true` and you toggle a light **on** without changing anything else, the plugin sends only `{ state: true }`. The bulb then restores whatever it was doing before (the last color/rhythm/scene). Any other change (brightness, color, temperature, scene) goes through normally and overrides this.
+### Offline detection (config setting)
+By default, when a bulb stops responding to UDP requests the plugin replays its last known state — so a bulb that's been unplugged or dropped off the network still appears fully operational in HomeKit. With `refreshInterval > 0`, after `pingFailuresBeforeOffline` consecutive missed responses the accessory is surfaced to HomeKit as "Not Responding", and a successful reply clears the state immediately. Pair with `discoveryInterval > 0` so bulbs that return to the network (or get a new DHCP lease) are re-learned automatically.
 
 ### Adaptive Lighting
+Automatically enabled for RGB and Tunable White bulbs. If you (or another app) change the bulb's color or temperature outside of Adaptive Lighting's schedule, it deactivates itself so you stay in control. HomeKit can re-enable it from the bulb's settings.
 
-Enabled automatically for RGB and Tunable White bulbs. If you (or another app) change the bulb's color or temperature outside of Adaptive Lighting's schedule, it deactivates itself so you stay in control. HomeKit can re-enable it from the bulb's settings.
-
-### Scenes
-
-Disabled by default because enabling them swaps the accessory from a plain `Lightbulb` into a `Lightbulb + Television` combo, which breaks HomeKit light-grouping. Turn on with `enableScenes: true` if you want quick scene selection from the Home app.
-
-## How discovery works
-
-The plugin sends a UDP broadcast to port `38899`:
-
-```json
-{"method":"registration","params":{"phoneMac":"<my_mac>","register":false,"phoneIp":"<my_ip>"}}
-```
-
-Each Wiz device replies on port `38900`:
-
-```json
-{"method":"registration","env":"pro","result":{"mac":"<device_mac>","success":true}}
-```
-
-The plugin then queries `getSystemConfig` to learn the module name and registers the accessory.
-
-## Development
-
-```bash
-npm ci
-npm run build     # compiles TS → dist/
-npm run watch     # rebuild + restart homebridge on change
-```
-
-> `npm run watch` uses [nodemon](./nodemon.json) which expects a Homebridge config at `./test/hbConfig`. Create one with your local network setup before running.
-
-Original protocol notes: [blog.dammitly.net](http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1).
+# Development
+Ideas from http://blog.dammitly.net/2019/10/cheap-hackable-wifi-light-bulbs-or-iot.html?m=1
 
 ## Credits
+Thanks to:
+#### [@dotkrnl](https://github.com/dotkrnl)
+[#7 Remove obsolete/invalid parameters from setPilot to fix](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/7)
 
-Upstream contributors (see [CHANGELOG.md](./CHANGELOG.md) for the full list):
+#### [@victori](https://github.com/victori)
+[#16 Support costco wiz lights that behave differently from philips wiz](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/16)
 
-- [@dotkrnl](https://github.com/dotkrnl) — [#7](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/7) setPilot parameter cleanup
-- [@victori](https://github.com/victori) — [#16](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/16) Costco Wiz light support
-- [@Supereg](https://github.com/supereg) — [#25](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/25) Name Characteristic fix
-- [@MoTechnicalities](https://github.com/motechnicalities) — [#56](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/56) README updates
-- [@xmanu](https://github.com/xmanu) — [#57](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/57) dimming range fix
-- [@BMDan](https://github.com/bmdan) — [#67](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/67) durable custom names
-- [@krystofcelba](https://github.com/krystofcelba) — [#74](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/74) dynamic scenes selector
-- [@bwp91](https://github.com/bwp91) — [#81](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81) config schema form
-- [@AndrewSverdrup](https://github.com/AndrewSverdrup) — [#119](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/119) `lastStatus` setting
-- [@pyrliu](https://github.com/pyrliu) — [#118](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/118) ESP25_SOCKET_01 support
-- [@dhananjaysathe](https://github.com/dhananjaysathe) — [#173](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/173) Surface unreachable bulbs as 'Not Responding' via HAP
+#### [@Supereg](https://github.com/supereg)
+[#25 Fix: getter for Name Characteristic returned object instead of the value](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/25)
+
+#### [@MoTechnicalities](https://github.com/motechnicalities)
+[#56 Update README.md](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/56)
+
+#### [@xmanu](https://github.com/xmanu)
+[#57 transform the received dimming value to also fit the 10 to 100 range](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/57)
+
+#### [@BMDan](https://github.com/bmdan)
+[#67 feat: Support durable custom names in config](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/67)
+
+#### [@krystofcelba](https://github.com/krystofcelba)
+[#74 feat: implement dynamic scenes selector](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/74)
+
+#### [@bwp91](https://github.com/bwp91)
+[#81 Add a config schema form](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/81)
+
+#### [@AndrewSverdrup](https://github.com/AndrewSverdrup)
+[#119 Add lastStatus setting so lights remember their setting when turned on](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/119)
+
+#### [@pyrliu](https://github.com/pyrliu)
+[#118 Added support for Wiz Smart Plug ESP25_SOCKET_01](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/118)
+
+#### [@dhananjaysathe](https://github.com/dhananjaysathe)
+[#173 Surface unreachable bulbs as 'Not Responding' via HAP](https://github.com/kpsuperplane/homebridge-wiz-lan/pull/173)
 
 ## Contributing
 
-This is primarily built for personal use, but PRs are welcome. Open an issue first for anything non-trivial.
+Mostly built for my own personal use, I'll probably reply to any created issues but probably will not actively support anything outside of the RGB bulbs. If you'd like to make a PR through, <3
 
-## License
+Furthermore, feel free to create and modify it on your own per MIT License.
 
-Apache-2.0. See [LICENSE](./LICENSE).
+## How bulbs are discovered
+
+Make a UDP broadcast to port 38899 with the following content:
+
+```
+{"method":"registration","params":{"phoneMac":"<my_mac_address>","register":false,"phoneIp":"<my_ip_address>"}}
+```
+
+You will get a response on port 38900 with the following content:
+
+```
+{"method":"registration","env":"pro","result":{"mac":"<light_address>","success":true}}
+```
+
+# License
+See LICENSE file
