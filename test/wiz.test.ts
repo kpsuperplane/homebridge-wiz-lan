@@ -7,6 +7,8 @@ import {
 } from "bun:test";
 import { FakeSocket, makeDevice } from "./__helpers__/factories";
 import { makeFakeAPI, makeFakeLogger } from "./__mocks__/homebridge";
+import initializePlugin from "../src/index";
+import { PLATFORM_NAME, PLUGIN_NAME } from "../src/constants";
 
 // Only mock the dgram package so HomebridgeWizLan's constructor doesn't open
 // a real UDP socket. The real util/network functions then operate on our
@@ -32,6 +34,20 @@ const makePlatform = (config: any = {}) => {
 
 beforeEach(() => {
   sharedSocket.sent.length = 0;
+});
+
+describe("plugin registration", () => {
+  it("registers the stable platform alias for legacy cached accessories", () => {
+    const api = makeFakeAPI();
+
+    initializePlugin(api as any);
+
+    const [pluginName, platformName, constructor] = (api.registerPlatform as any).mock
+      .calls[0];
+    expect(pluginName).toBe(PLUGIN_NAME);
+    expect(platformName).toBe(PLATFORM_NAME);
+    expect(typeof constructor).toBe("function");
+  });
 });
 
 describe("HomebridgeWizLan.constructor", () => {
@@ -143,6 +159,10 @@ describe("HomebridgeWizLan.tryAddDevice", () => {
     platform.tryAddDevice(device);
 
     expect(api.registerPlatformAccessories).toHaveBeenCalledTimes(1);
+    expect((api.registerPlatformAccessories as any).mock.calls[0].slice(0, 2)).toEqual([
+      PLUGIN_NAME,
+      PLATFORM_NAME,
+    ]);
     const accessory = platform.accessories[0];
     expect(platform.initializedAccessories[accessory.UUID]).toBeDefined();
     const outlet = accessory.getService(platform.Service.Outlet)!;
@@ -254,6 +274,11 @@ describe("HomebridgeWizLan.configureAccessory", () => {
     acc.context = makeDevice({ mac: "IGN_CACHED", ip: "10.0.0.17" });
     platform.configureAccessory(acc as any);
     expect(api.unregisterPlatformAccessories).toHaveBeenCalled();
+    expect((api.unregisterPlatformAccessories as any).mock.calls[0]).toEqual([
+      PLUGIN_NAME,
+      PLATFORM_NAME,
+      [acc],
+    ]);
     expect(platform.accessories).not.toContain(acc);
   });
 
