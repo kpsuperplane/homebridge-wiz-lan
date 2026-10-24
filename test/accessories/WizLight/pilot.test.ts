@@ -65,6 +65,12 @@ import {
 } from "../../../src/accessories/WizLight/pilot";
 import { initDimming } from "../../../src/accessories/WizLight/characteristics/dimming";
 import { initTemperature } from "../../../src/accessories/WizLight/characteristics/temperature";
+import {
+  transformHue,
+  transformSaturation,
+} from "../../../src/accessories/WizLight/characteristics/color";
+import { transformTemperature } from "../../../src/accessories/WizLight/characteristics/temperature";
+import { kelvinToMired } from "../../../src/util/color";
 import { isOffline, recordFailure, recordSuccess as _recordSuccess } from "../../../src/util/offline";
 import {
   makeAccessoryWithService,
@@ -237,6 +243,36 @@ describe("WizLight/pilot: getPilot success path", () => {
       temp: 3000,
     });
     expect(normalizePilot({ ...reply, temp: NaN })).not.toHaveProperty("temp");
+  });
+
+  it("uses fresh RGB for color characteristics when temperature is invalid", () => {
+    const wiz = makeFakeWiz();
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const device = makeDevice({ mac: TEST_MAC, model: "ESP01_SHRGB_03" });
+    const previous = makeLightPilot({ mac: TEST_MAC, temp: 5000 });
+    cachedPilot[TEST_MAC] = previous;
+
+    getPilot(wiz, accessory as any, device, () => {}, () => {});
+    pendingGet[0](null, makeLightPilot({
+      mac: TEST_MAC,
+      r: 255,
+      g: 0,
+      b: 0,
+      temp: 0,
+    }));
+
+    const service = accessory.getService(wiz.Service.Lightbulb)!;
+    const hue = service.getCharacteristic(wiz.Characteristic.Hue);
+    const saturation = service.getCharacteristic(wiz.Characteristic.Saturation);
+    const temperature = service.getCharacteristic(wiz.Characteristic.ColorTemperature);
+    const expected = makeLightPilot({ mac: TEST_MAC, r: 255, g: 0, b: 0 });
+
+    expect(cachedPilot[TEST_MAC]).not.toHaveProperty("temp");
+    expect(hue.value).toBe(transformHue(expected));
+    expect(saturation.value).toBe(transformSaturation(expected));
+    expect(temperature.value).toBe(transformTemperature(expected));
+    expect(temperature.value).toBe(kelvinToMired(2200));
+    expect(temperature.value).not.toBe(kelvinToMired(previous.temp));
   });
 
   it("triggers disabled-adaptive-lighting callback when color/scene changed", () => {

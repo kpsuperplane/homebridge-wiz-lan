@@ -80,6 +80,12 @@ function isFinitePositive(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
+function hasValidRgb(pilot: Pilot) {
+  return [pilot.r, pilot.g, pilot.b].some(
+    value => typeof value === "number" && Number.isFinite(value),
+  );
+}
+
 /**
  * Keep malformed or partial firmware replies out of both the cache and HAP.
  * Some scenes omit dimming altogether, while a few firmware versions have
@@ -100,7 +106,10 @@ export function normalizePilot(pilot: Pilot, previous?: Pilot): Pilot {
   }
 
   if (normalized.temp !== undefined && !isFinitePositive(normalized.temp)) {
-    if (isFinitePositive(previous?.temp)) {
+    // A reply with RGB data has a newer color than the cached white-channel
+    // value. Keeping the old temperature here would make pilotToColor ignore
+    // those RGB fields and publish the previous white instead.
+    if (!hasValidRgb(normalized) && isFinitePositive(previous?.temp)) {
       normalized.temp = previous!.temp;
     } else {
       delete normalized.temp;
