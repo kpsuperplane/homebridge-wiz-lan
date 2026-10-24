@@ -108,6 +108,17 @@ describe("HomebridgeWizLan.deviceShouldBeIgnored", () => {
     ).toBe(true);
   });
 
+  it("matches MACs regardless of case or common separators", () => {
+    const { platform } = makePlatform({
+      ignoredDevices: [{ mac: "aa:bb:cc:dd:ee:ff" }],
+    });
+    expect(
+      platform.deviceShouldBeIgnored(
+        makeDevice({ mac: "AABBCCDDEEFF", ip: "10.0.0.5" }),
+      ),
+    ).toBe(true);
+  });
+
   it("matches by IP (host field)", () => {
     const { platform } = makePlatform({
       ignoredDevices: [{ host: "10.0.0.5" }],
@@ -194,6 +205,18 @@ describe("HomebridgeWizLan.tryAddDevice", () => {
     });
     platform.tryAddDevice(
       makeDevice({ mac: "OVR1", ip: "10.0.0.13", model: "ESP01_SHRGB_03" }),
+    );
+    const registered = (api.registerPlatformAccessories as any).mock
+      .calls[0][2][0];
+    expect(registered.displayName).toBe("Kitchen Lamp");
+  });
+
+  it("uses the friendly name override when MAC case and separators differ", () => {
+    const { platform, api } = makePlatform({
+      devices: [{ mac: "aa-bb-cc-dd-ee-ff", name: "Kitchen Lamp" }],
+    });
+    platform.tryAddDevice(
+      makeDevice({ mac: "AABBCCDDEEFF", ip: "10.0.0.13", model: "ESP01_SHRGB_03" }),
     );
     const registered = (api.registerPlatformAccessories as any).mock
       .calls[0][2][0];

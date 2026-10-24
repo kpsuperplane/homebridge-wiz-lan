@@ -19,6 +19,17 @@ import { bindSocket, createSocket, MIN_DISCOVERY_INTERVAL_SECONDS, registerDisco
 // much spacing between devices (the whole sweep still fits in one interval).
 const REFRESH_STAGGER_MAX_MS = 100;
 
+/**
+ * Normalize the MAC address formats used by Wiz discovery and Homebridge
+ * configuration. Wiz reports compact uppercase addresses, while users often
+ * copy lowercase addresses with colon or hyphen separators.
+ */
+function normalizeMac(mac?: string) {
+  return typeof mac === "string"
+    ? mac.trim().replace(/[.:-]/g, "").toUpperCase()
+    : undefined;
+}
+
 export default class HomebridgeWizLan {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
@@ -188,7 +199,11 @@ export default class HomebridgeWizLan {
   }
 
   deviceShouldBeIgnored(device: Device) {
-    if (this.config.ignoredDevices?.some(ignoredDevice => ignoredDevice.mac === device.mac || ignoredDevice.host === device.ip)){
+    const deviceMac = normalizeMac(device.mac);
+    if (this.config.ignoredDevices?.some(ignoredDevice =>
+      (ignoredDevice.mac && normalizeMac(ignoredDevice.mac) === deviceMac) ||
+      ignoredDevice.host === device.ip,
+    )){
       this.log.info(`Ignoring device with ${device.ip} and ${device.mac}...`);
       return true;
     }
@@ -223,7 +238,7 @@ export default class HomebridgeWizLan {
       this.log.debug(`Found some configs...`);
       for (const configDevice of this.config.devices) {
         this.log.debug(`Pondering ${JSON.stringify(configDevice)} versus ${JSON.stringify(device)}...`);
-        if ((configDevice.mac && device.mac == configDevice.mac) ||
+        if ((configDevice.mac && normalizeMac(configDevice.mac) === normalizeMac(device.mac)) ||
             (configDevice.host && device.ip == configDevice.host)) {
           this.log.debug(`Found a match...`);
           if (configDevice.name) {

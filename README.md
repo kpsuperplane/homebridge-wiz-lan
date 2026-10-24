@@ -52,6 +52,7 @@ Full configuration options:
 
     // [Optional] Manual list of bulbs. `host` is required; `name` overrides
     // the HomeKit display name, `mac` pins the entry to a specific device.
+    // MAC matching ignores case and common separators (`:`, `-`, or `.`).
     // Default: None
     "devices": [
       { "host": "192.168.0.2" },
@@ -61,6 +62,7 @@ Full configuration options:
     ],
 
     // [Optional] Devices to exclude from HomeKit. Match by `host` or `mac`.
+    // MAC matching ignores case and common separators (`:`, `-`, or `.`).
     // Devices already in the Homebridge cache are unregistered on next start.
     // Default: None
     "ignoredDevices": [

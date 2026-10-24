@@ -80,7 +80,8 @@
             },
             "mac": {
               "title": "Device MAC",
-              "type": "string"
+              "type": "string",
+              "description": "MAC address; matching ignores case and common separators (:, -, or .)."
             }
           }
         }
@@ -99,7 +100,8 @@
             },
             "mac": {
               "title": "Device MAC",
-              "type": "string"
+              "type": "string",
+              "description": "MAC address; matching ignores case and common separators (:, -, or .)."
             }
           }
         }
