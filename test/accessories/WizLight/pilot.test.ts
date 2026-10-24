@@ -57,11 +57,14 @@ import {
   cachedPilot,
   disabledAdaptiveLightingCallback,
   getPilot,
+  normalizePilot,
   pilotToColor,
   setPilot,
   updateColorTemp,
   writeGeneration,
 } from "../../../src/accessories/WizLight/pilot";
+import { initDimming } from "../../../src/accessories/WizLight/characteristics/dimming";
+import { initTemperature } from "../../../src/accessories/WizLight/characteristics/temperature";
 import { isOffline, recordFailure, recordSuccess as _recordSuccess } from "../../../src/util/offline";
 import {
   makeAccessoryWithService,
@@ -138,11 +141,12 @@ describe("WizLight/pilot: getPilot success path", () => {
     const wiz = makeFakeWiz();
     const accessory = makeAccessoryWithService("Lightbulb");
     const device = makeDevice({ mac: TEST_MAC });
+    let received: any;
     getPilot(
       wiz,
       accessory as any,
       device,
-      () => {},
+      (pilot) => (received = pilot),
       () => {},
     );
     pendingGet[0](null, {
@@ -153,6 +157,86 @@ describe("WizLight/pilot: getPilot success path", () => {
       // no dimming
     });
     expect(cachedPilot[TEST_MAC].dimming).toBe(10);
+    expect(received.dimming).toBe(10);
+    expect(Number.isFinite(received.dimming)).toBe(true);
+  });
+
+  it("normalizes an omitted dimming before the Brightness get callback", () => {
+    const wiz = makeFakeWiz();
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const device = makeDevice({ mac: TEST_MAC });
+    initDimming(accessory as any, device, wiz);
+    const brightness = accessory
+      .getService(wiz.Service.Lightbulb)!
+      .getCharacteristic(wiz.Characteristic.Brightness);
+    const received: any[] = [];
+
+    brightness.emit("get", (error: Error | null, value: number) => {
+      received.push({ error, value });
+    });
+    expect(pendingGet).toHaveLength(1);
+    pendingGet[0](null, {
+      mac: TEST_MAC,
+      rssi: -50,
+      src: "udp",
+      state: false,
+      sceneId: 14,
+    });
+
+    expect(received).toHaveLength(1);
+    expect(received[0].error).toBeNull();
+    expect(received[0].value).toBe(1);
+    expect(Number.isFinite(received[0].value)).toBe(true);
+  });
+
+  it("keeps invalid temperatures out of the Color Temperature get callback", () => {
+    const wiz = makeFakeWiz();
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const device = makeDevice({ mac: TEST_MAC });
+    initTemperature(accessory as any, device, wiz);
+    const temperature = accessory
+      .getService(wiz.Service.Lightbulb)!
+      .getCharacteristic(wiz.Characteristic.ColorTemperature);
+    for (const temp of [0, Infinity, NaN]) {
+      delete cachedPilot[TEST_MAC];
+      const received: any[] = [];
+      temperature.emit("get", (error: Error | null, value: number) => {
+        received.push({ error, value });
+      });
+      pendingGet[pendingGet.length - 1](null, {
+        mac: TEST_MAC,
+        rssi: -50,
+        src: "udp",
+        state: true,
+        temp,
+      });
+
+      expect(received).toHaveLength(1);
+      expect(received[0].error).toBeNull();
+      expect(Number.isFinite(received[0].value)).toBe(true);
+      expect(cachedPilot[TEST_MAC]).not.toHaveProperty("temp");
+    }
+  });
+
+  it("preserves prior dimming and drops invalid temperature values", () => {
+    const previous = makeLightPilot({ dimming: 55, temp: 3000 });
+    const reply = {
+      mac: TEST_MAC,
+      rssi: -50,
+      src: "udp",
+      state: true,
+      temp: 0,
+    } as any;
+
+    expect(normalizePilot(reply, previous)).toMatchObject({
+      dimming: 55,
+      temp: 3000,
+    });
+    expect(normalizePilot({ ...reply, temp: Infinity }, previous)).toMatchObject({
+      dimming: 55,
+      temp: 3000,
+    });
+    expect(normalizePilot({ ...reply, temp: NaN })).not.toHaveProperty("temp");
   });
 
   it("triggers disabled-adaptive-lighting callback when color/scene changed", () => {
