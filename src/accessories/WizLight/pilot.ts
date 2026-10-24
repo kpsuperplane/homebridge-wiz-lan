@@ -76,6 +76,49 @@ export const disabledAdaptiveLightingCallback: {
   [mac: string]: () => void;
 } = {};
 
+function isFinitePositive(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function hasValidRgb(pilot: Pilot) {
+  return [pilot.r, pilot.g, pilot.b].some(
+    value => typeof value === "number" && Number.isFinite(value),
+  );
+}
+
+/**
+ * Keep malformed or partial firmware replies out of both the cache and HAP.
+ * Some scenes omit dimming altogether, while a few firmware versions have
+ * returned invalid color temperatures. The cache is the only reliable place
+ * to recover the last usable dimming value when a reply is partial.
+ */
+export function normalizePilot(pilot: Pilot, previous?: Pilot): Pilot {
+  const normalized = Object.fromEntries(
+    Object.entries(pilot).filter(([, value]) => value !== undefined)
+  ) as Pilot;
+
+  if (!Number.isFinite(normalized.dimming)) {
+    normalized.dimming = Number.isFinite(previous?.dimming)
+      ? previous!.dimming
+      : normalized.state
+        ? 100
+        : 10;
+  }
+
+  if (normalized.temp !== undefined && !isFinitePositive(normalized.temp)) {
+    // A reply with RGB data has a newer color than the cached white-channel
+    // value. Keeping the old temperature here would make pilotToColor ignore
+    // those RGB fields and publish the previous white instead.
+    if (!hasValidRgb(normalized) && isFinitePositive(previous?.temp)) {
+      normalized.temp = previous!.temp;
+    } else {
+      delete normalized.temp;
+    }
+  }
+
+  return normalized;
+}
+
 // Since 3.4.0 every cache-answered read pushes the probe result back into HAP,
 // which previously happened only when a device came back online. Re-publishing
 // a value HomeKit already holds still emits an event notification to every
@@ -221,6 +264,8 @@ export function getPilot(
       wiz.log.info(`[${device.mac}] Device is back online`);
     }
 
+    const normalizedPilot = normalizePilot(pilot, cachedPilot[device.mac]);
+
     if ((writeGeneration[device.mac] ?? 0) !== generationAtProbeStart) {
       // A write went out while this probe was in flight, so the reply is
       // stale even though it arrived last. Drop it — the next probe reports
@@ -232,7 +277,7 @@ export function getPilot(
       if (!responded) {
         // HomeKit is still waiting on this GET — answer with the freshest
         // known state instead of the pre-write reply.
-        onSuccess(cachedPilot[device.mac] ?? pilot);
+        onSuccess(cachedPilot[device.mac] ?? normalizedPilot);
       }
       return;
     }
@@ -244,26 +289,23 @@ export function getPilot(
       // treat both the same, like updatePilot's useCT check does — otherwise
       // every reply from such a bulb reads as an active scene and disables
       // adaptive lighting on every poll.
-      ((pilot.sceneId ?? 0) !== 0 ||
-        pilot.r !== old.r ||
-        pilot.g !== old.g ||
-        pilot.b !== old.b ||
-        pilot.temp !== old.temp)
+      ((normalizedPilot.sceneId ?? 0) !== 0 ||
+        normalizedPilot.r !== old.r ||
+        normalizedPilot.g !== old.g ||
+        normalizedPilot.b !== old.b ||
+        normalizedPilot.temp !== old.temp)
     ) {
       disabledAdaptiveLightingCallback[device.mac]?.();
     }
-    cachedPilot[device.mac] = {
-      dimming: (pilot.state ?? old?.state) ? 100 : 10,
-      ...pilot
-    };
+    cachedPilot[device.mac] = normalizedPilot;
     if (responded) {
       // HomeKit was answered from cache (or shown "No Response") — push the
       // fresh state so the tile converges on reality. Only changed values go
       // out, except when the device just came back: HomeKit is holding an
       // error state that a value-equality check can't see.
-      updatePilot(wiz, accessory, device, pilot, cameBack);
+      updatePilot(wiz, accessory, device, normalizedPilot, cameBack);
     } else {
-      onSuccess(pilot);
+      onSuccess(normalizedPilot);
     }
   };
 
