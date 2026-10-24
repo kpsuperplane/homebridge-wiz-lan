@@ -15,6 +15,7 @@ describe("WizLight.is — model predicates", () => {
     "ESP15_MHWRGB_01",
     "ESP06_DHRGB_01",
     "ESP17_MHORGB_01",
+    "ESP25_SHORGB_01",
   ])("returns true for known light model %s", (model) => {
     expect(WizLight.is(makeDevice({ model }))).toBe(true);
   });
@@ -35,6 +36,7 @@ describe("WizLight.getName — friendly names", () => {
     ["ESP06_DHRGB_01", "Light Pole"],
     ["ESP15_MHWRGB_01", "LED String Lights"],
     ["ESP17_MHORGB_01", "Light Strip"],
+    ["ESP25_SHORGB_01", "Light Strip"],
     ["UNKNOWN_FOO_BAR", "Unknown Bulb"],
   ];
   for (const [model, name] of cases) {
@@ -45,6 +47,21 @@ describe("WizLight.getName — friendly names", () => {
 });
 
 describe("WizLight.init — characteristic registration", () => {
+  it("SHORGB strips expose on/off, brightness, and RGB controls (issue #165)", () => {
+    const wiz = makeFakeWiz({ enableScenes: false } as any);
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const device = makeDevice({ model: "ESP25_SHORGB_01" });
+    expect(WizLight.is(device)).toBe(true);
+    new (WizLight as any)(accessory, device, wiz).init();
+    const service = accessory.getService(FakeServiceCtors.Lightbulb)!;
+    for (const name of ["On", "Brightness", "Hue", "Saturation"]) {
+      const characteristic = service.getCharacteristic(wiz.Characteristic[name]);
+      expect(characteristic.listenerCount("get")).toBe(1);
+      expect(characteristic.listenerCount("set")).toBe(1);
+    }
+    expect(accessory.getService(FakeServiceCtors.Outlet)).toBeUndefined();
+  });
+
   it("RGB device registers Hue/Saturation + ColorTemperature on the Lightbulb service", () => {
     const wiz = makeFakeWiz({ enableScenes: false } as any);
     const accessory = makeAccessoryWithService("Lightbulb");
