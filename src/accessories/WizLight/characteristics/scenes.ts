@@ -14,6 +14,7 @@ import { getPilot, setPilot } from "../pilot";
 import { Pilot } from "../pilot";
 import { isRGB, isTW } from "../util";
 import { transformOnOff } from ".";
+import { syncPowerState } from "./powerSync";
 
 const SCENES = [
   ["No Scene", ["RGB", "DW", "TW"]], //0
@@ -82,6 +83,14 @@ export function initScenes(
   let scenesService = accessory.getService(Service.Television);
   const lightbulbService = accessory.getService(Service.Lightbulb)!;
 
+  // Older releases accidentally added Television.Active to the Lightbulb
+  // service. Remove it without calling getCharacteristic first, since HAP
+  // warns whenever that invalid characteristic is created on a fresh service.
+  if (lightbulbService.testCharacteristic(Characteristic.Active)) {
+    const active = lightbulbService.getCharacteristic(Characteristic.Active);
+    lightbulbService.removeCharacteristic(active);
+  }
+
   if (config.enableScenes !== true) {
     if (scenesService != null) {
       accessory.removeService(scenesService);
@@ -129,7 +138,11 @@ export function initScenes(
         wiz,
         accessory,
         device,
-        (pilot) => callback(null, transformOnOff(pilot)),
+        (pilot) => {
+          const activeValue = transformOnOff(pilot);
+          syncPowerState(wiz, accessory, Boolean(activeValue), "television");
+          callback(null, activeValue);
+        },
         callback
       )
     )
@@ -137,23 +150,8 @@ export function initScenes(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         const value = Boolean(newValue);
-        lightbulbService
-          .getCharacteristic(Characteristic.On)
-          .updateValue(value);
+        syncPowerState(wiz, accessory, value, "television");
         setPilot(wiz, accessory, device, { state: value }, next);
-      }
-    );
-
-  lightbulbService
-    .getCharacteristic(Characteristic.Active)
-    .on(
-      "set",
-      (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
-        const value = Boolean(newValue);
-        scenesService!
-          .getCharacteristic(Characteristic.Active)
-          .updateValue(value);
-        next();
       }
     );
 

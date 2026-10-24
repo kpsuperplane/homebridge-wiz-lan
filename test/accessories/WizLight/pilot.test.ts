@@ -69,6 +69,8 @@ import {
   makeFakeWiz,
   makeLightPilot,
 } from "../../__helpers__/factories";
+import { initOnOff } from "../../../src/accessories/WizLight/characteristics/onOff";
+import { initScenes } from "../../../src/accessories/WizLight/characteristics/scenes";
 
 const TEST_MAC = "AABBCCDDEEFF";
 
@@ -625,6 +627,129 @@ describe("WizLight/pilot: setPilot scene/color exclusivity", () => {
     pendingSet[1](null);
     expect(cachedPilot[TEST_MAC].state).toBe(true);
     expect(cachedPilot[TEST_MAC].dimming).toBe(80);
+  });
+});
+
+describe("WizLight power controls: scene synchronization", () => {
+  const setup = () => {
+    const wiz = makeFakeWiz({ enableScenes: true } as any);
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const device = makeDevice({ mac: TEST_MAC, model: "ESP01_SHRGB_03" });
+    initOnOff(accessory as any, device, wiz);
+    initScenes(wiz, accessory as any, device);
+    return { wiz, accessory, device };
+  };
+
+  it("mirrors Lightbulb.On and Television.Active in either set direction", () => {
+    const { wiz, accessory, device } = setup();
+    cachedPilot[TEST_MAC] = makeLightPilot({ mac: TEST_MAC, state: true });
+    const lightbulb = accessory.getService(wiz.Service.Lightbulb)!;
+    const television = accessory.getService(wiz.Service.Television)!;
+    const on = lightbulb.getCharacteristic(wiz.Characteristic.On);
+    const active = television.getCharacteristic(wiz.Characteristic.Active);
+
+    let onError: Error | null | undefined;
+    on.emit("set", false, (error: Error | null) => (onError = error));
+    expect(onError).toBeUndefined();
+    expect(on.value).toBeNull();
+    expect(active.value).toBe(0);
+    pendingSet[0](null);
+
+    on.updateValue(false);
+    let activeError: Error | null | undefined;
+    active.emit("set", true, (error: Error | null) => (activeError = error));
+    expect(activeError).toBeUndefined();
+    expect(on.value).toBe(true);
+    expect(active.value).toBe(0);
+    pendingSet[1](null);
+  });
+
+  it("does not republish an unchanged counterpart on repeated sets", () => {
+    const { wiz, accessory } = setup();
+    cachedPilot[TEST_MAC] = makeLightPilot({ mac: TEST_MAC, state: true });
+    const lightbulb = accessory.getService(wiz.Service.Lightbulb)!;
+    const television = accessory.getService(wiz.Service.Television)!;
+    const on = lightbulb.getCharacteristic(wiz.Characteristic.On);
+    const active = television.getCharacteristic(wiz.Characteristic.Active);
+
+    on.emit("set", false, () => {});
+    pendingSet[0](null);
+    const activeUpdates = (active.updateValue as any).mock.calls.length;
+
+    on.emit("set", false, () => {});
+    pendingSet[1](null);
+    expect((active.updateValue as any).mock.calls.length).toBe(activeUpdates);
+    expect((on.updateValue as any).mock.calls.length).toBe(0);
+  });
+
+  it("does not republish an unchanged counterpart on repeated GETs", () => {
+    const { wiz, accessory, device } = setup();
+    const lightbulb = accessory.getService(wiz.Service.Lightbulb)!;
+    const television = accessory.getService(wiz.Service.Television)!;
+    const on = lightbulb.getCharacteristic(wiz.Characteristic.On);
+    const active = television.getCharacteristic(wiz.Characteristic.Active);
+
+    let first: boolean | undefined;
+    on.emit("get", (error: Error | null, value: boolean) => {
+      expect(error).toBeNull();
+      first = value;
+    });
+    pendingGet[0](null, makeLightPilot({ mac: device.mac, state: true }));
+    expect(first).toBe(true);
+    expect((on.updateValue as any).mock.calls.length).toBe(0);
+    const activeUpdates = (active.updateValue as any).mock.calls.length;
+
+    let second: boolean | undefined;
+    on.emit("get", (error: Error | null, value: boolean) => {
+      expect(error).toBeNull();
+      second = value;
+    });
+    expect(second).toBe(true);
+    expect((active.updateValue as any).mock.calls.length).toBe(activeUpdates);
+  });
+
+  it("reconciles both controls after a failed write", () => {
+    const { wiz, accessory, device } = setup();
+    cachedPilot[TEST_MAC] = makeLightPilot({ mac: TEST_MAC, state: true });
+    const lightbulb = accessory.getService(wiz.Service.Lightbulb)!;
+    const television = accessory.getService(wiz.Service.Television)!;
+    const on = lightbulb.getCharacteristic(wiz.Characteristic.On);
+    const active = television.getCharacteristic(wiz.Characteristic.Active);
+
+    let error: Error | null | undefined;
+    on.emit("set", false, (e: Error | null) => (error = e));
+    expect(on.value).toBeNull();
+    expect(active.value).toBe(0);
+
+    const writeError = new Error("timeout");
+    pendingSet[0](writeError);
+    expect(error).toBe(writeError);
+    expect(pendingGet.length).toBe(1);
+
+    for (const pending of pendingGet.splice(0)) {
+      pending(null, makeLightPilot({ mac: TEST_MAC, state: true }));
+    }
+    expect(on.value).toBe(1);
+    expect(active.value).toBe(1);
+  });
+
+  it("probes and reconciles when a setter runs before the first GET", () => {
+    const { wiz, accessory, device } = setup();
+    const lightbulb = accessory.getService(wiz.Service.Lightbulb)!;
+    const television = accessory.getService(wiz.Service.Television)!;
+    const on = lightbulb.getCharacteristic(wiz.Characteristic.On);
+    const active = television.getCharacteristic(wiz.Characteristic.Active);
+
+    let error: Error | null | undefined;
+    on.emit("set", false, (e: Error | null) => (error = e));
+    expect(error?.message).toMatch(/No cached state/);
+    expect(on.value).toBeNull();
+    expect(active.value).toBe(0);
+    expect(pendingGet.length).toBe(1);
+
+    pendingGet[0](null, makeLightPilot({ mac: TEST_MAC, state: true }));
+    expect(on.value).toBe(1);
+    expect(active.value).toBe(1);
   });
 });
 

@@ -11,6 +11,7 @@ import {
   setPilot as _setPilot,
 } from "../../../util/network";
 import { cachedPilot, getPilot, Pilot, setPilot } from "../pilot";
+import { syncPowerState } from "./powerSync";
 
 export function transformOnOff(pilot: Pilot) {
   return Number(pilot.state);
@@ -29,7 +30,11 @@ export function initOnOff(
         wiz,
         accessory,
         device,
-        pilot => callback(null, transformOnOff(pilot)),
+        pilot => {
+          const value = Boolean(transformOnOff(pilot));
+          syncPowerState(wiz, accessory, value, "lightbulb");
+          callback(null, value);
+        },
         callback
       )
     )
@@ -37,6 +42,7 @@ export function initOnOff(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
         const state = Boolean(newValue);
+        syncPowerState(wiz, accessory, state, "lightbulb");
         const cachedDimming = cachedPilot[device.mac]?.dimming;
         const hasUsableDimming =
           typeof cachedDimming === "number" &&
