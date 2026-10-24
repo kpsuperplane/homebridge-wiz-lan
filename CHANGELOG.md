@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.4.3
+- [FIX] Recognize ESP10_SOCKET_01 smart plugs as outlets (experimental; hardware verification pending), addressing #153
+- [FIX] Update the development dependency lockfiles to resolve brace-expansion security advisories
+
 ## 3.4.2
 - [FIX] Rate-limit and stagger UDP probes, back off offline devices, and suppress unchanged HomeKit updates to prevent read/notification feedback loops from flooding the LAN
 - [FIX] Prevent delayed `getPilot` replies from overwriting newer writes, while reconciling state after lost `setPilot` acknowledgements
