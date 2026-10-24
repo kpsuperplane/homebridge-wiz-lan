@@ -15,7 +15,7 @@ import {
 } from "../../__mocks__/homebridge";
 
 describe("WizSocket.is — socket predicates", () => {
-  it.each(["ESP10_SOCKET_06", "ESP25_SOCKET_01"])(
+  it.each(["ESP10_SOCKET_01", "ESP10_SOCKET_06", "ESP25_SOCKET_01"])(
     "returns true for socket model %s",
     (model) => {
       expect(WizSocket.is(makeDevice({ model }))).toBe(true);

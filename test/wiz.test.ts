@@ -137,6 +137,22 @@ describe("HomebridgeWizLan.deviceShouldBeIgnored", () => {
 });
 
 describe("HomebridgeWizLan.tryAddDevice", () => {
+  it("registers ESP10_SOCKET_01 as an outlet (issue #153)", () => {
+    const { platform, api, log } = makePlatform();
+    const device = makeDevice({ mac: "SOCKET153", model: "ESP10_SOCKET_01" });
+    platform.tryAddDevice(device);
+
+    expect(api.registerPlatformAccessories).toHaveBeenCalledTimes(1);
+    const accessory = platform.accessories[0];
+    expect(platform.initializedAccessories[accessory.UUID]).toBeDefined();
+    const outlet = accessory.getService(platform.Service.Outlet)!;
+    expect(outlet).toBeDefined();
+    expect(outlet.getCharacteristic(platform.Characteristic.On).listenerCount("get")).toBe(1);
+    expect(outlet.getCharacteristic(platform.Characteristic.On).listenerCount("set")).toBe(1);
+    expect(accessory.getService(platform.Service.Lightbulb)).toBeUndefined();
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
   it("registers a new accessory for an unseen RGB bulb", () => {
     const { platform, api } = makePlatform({});
     platform.tryAddDevice(
@@ -205,6 +221,18 @@ describe("HomebridgeWizLan.tryAddDevice", () => {
 });
 
 describe("HomebridgeWizLan.configureAccessory", () => {
+  it("restores ESP10_SOCKET_01 as an outlet (issue #153)", () => {
+    const { platform, api } = makePlatform();
+    const accessory = new api.platformAccessory("Cached Socket", "uuid-socket153");
+    accessory.context = makeDevice({ mac: "CACHED153", model: "ESP10_SOCKET_01" });
+    platform.configureAccessory(accessory);
+
+    expect(platform.initializedAccessories[accessory.UUID]).toBeDefined();
+    expect(accessory.getService(platform.Service.Outlet)).toBeDefined();
+    expect(accessory.getService(platform.Service.Lightbulb)).toBeUndefined();
+    expect(api.registerPlatformAccessories).not.toHaveBeenCalled();
+  });
+
   it("loads cached accessories and initializes them", () => {
     const { platform, api } = makePlatform({});
     const acc = new api.platformAccessory("Cached Bulb", "uuid-cached");

@@ -5,7 +5,7 @@ import { initOnOff } from "./characteristics";
 
 class WizSocket extends WizAccessory<Pilot> {
   static is = (device: Device) =>
-    ["ESP10_SOCKET_06", "ESP25_SOCKET_01"].some((id) =>
+    ["ESP10_SOCKET_01", "ESP10_SOCKET_06", "ESP25_SOCKET_01"].some((id) =>
       device.model.includes(id)
     );
   static getName = (_: Device) => {
