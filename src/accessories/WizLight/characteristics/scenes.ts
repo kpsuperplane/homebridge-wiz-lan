@@ -178,9 +178,9 @@ export function initScenes(
     // The original implementation used the numeric scene id as the service
     // name and the scene name as its subtype. Repair those cached services as
     // they are encountered so HomeKit sees a meaningful input name after a
-    // restart, while keeping the numeric id as the stable subtype.
+    // restart. New services use the numeric id as their subtype, while cached
+    // services keep their old subtype so their HAP identity remains stable.
     service.displayName = sceneName;
-    service.subtype = String(sceneId);
     service
       .getCharacteristic(Characteristic.Name)
       .updateValue(sceneName);

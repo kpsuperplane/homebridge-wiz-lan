@@ -74,7 +74,7 @@ describe("scenes: enableScenes=true device filtering", () => {
     initScenes(wiz, accessory as any, makeDevice({ model: "ESP01_SHRGB_03" }));
 
     expect(stale.displayName).toBe("Ocean");
-    expect(stale.subtype).toBe("1");
+    expect(stale.subtype).toBe("Ocean");
     expect(stale.getCharacteristic(wiz.Characteristic.Name).value).toBe("Ocean");
     expect(stale.getCharacteristic(wiz.Characteristic.ConfiguredName).value).toBe(
       "Ocean",
