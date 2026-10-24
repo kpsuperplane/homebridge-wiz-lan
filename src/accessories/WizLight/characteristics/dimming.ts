@@ -38,6 +38,12 @@ export function initDimming(
     .on(
       "set",
       (newValue: CharacteristicValue, next: CharacteristicSetCallback) => {
+        if (Number(newValue) === 0) {
+          // Brightness 0 is HomeKit's off state. Keep the cached dimming value
+          // so a later On request restores the previous usable brightness.
+          setPilot(wiz, accessory, device, { state: false }, next);
+          return;
+        }
         setPilot(
           wiz,
           accessory,
