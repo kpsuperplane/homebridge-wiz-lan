@@ -17,6 +17,11 @@ const sceneIdsAdded = (accessory: any) =>
     .map((s: any) => Number(s.getCharacteristic("Identifier").value))
     .sort((a: number, b: number) => a - b);
 
+const inputSources = (accessory: any) =>
+  accessory.services.filter(
+    (s: any) => s.UUID === FakeServiceCtors.InputSource.UUID,
+  );
+
 describe("scenes: enableScenes=false", () => {
   it("removes any existing Television service and adds no InputSource services", () => {
     const wiz = makeFakeWiz({ enableScenes: false } as any);
@@ -43,6 +48,42 @@ describe("scenes: enableScenes=true device filtering", () => {
     const ids = sceneIdsAdded(accessory);
     // All 33 scenes are RGB-compatible (index 0..32)
     expect(ids).toEqual(Array.from({ length: 33 }, (_, i) => i));
+
+    const ocean = inputSources(accessory).find(
+      (service: any) => Number(service.getCharacteristic("Identifier").value) === 1,
+    );
+    expect(ocean.displayName).toBe("Ocean");
+    expect(ocean.subtype).toBe("1");
+    expect(ocean.getCharacteristic("Name").value).toBe("Ocean");
+    expect(ocean.getCharacteristic("ConfiguredName").value).toBe("Ocean");
+  });
+
+  it("repairs cached input source names and subtypes", () => {
+    const wiz = makeFakeWiz({ enableScenes: true } as any);
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const stale = accessory.addService(
+      FakeServiceCtors.InputSource,
+      "1",
+      "Ocean",
+    );
+    stale
+      .setCharacteristic(wiz.Characteristic.Identifier, 1)
+      .setCharacteristic(wiz.Characteristic.Name, "1")
+      .setCharacteristic(wiz.Characteristic.ConfiguredName, "Old Ocean");
+
+    initScenes(wiz, accessory as any, makeDevice({ model: "ESP01_SHRGB_03" }));
+
+    expect(stale.displayName).toBe("Ocean");
+    expect(stale.subtype).toBe("Ocean");
+    expect(stale.getCharacteristic(wiz.Characteristic.Name).value).toBe("Ocean");
+    expect(stale.getCharacteristic(wiz.Characteristic.ConfiguredName).value).toBe(
+      "Ocean",
+    );
+    expect(
+      inputSources(accessory).filter(
+        (service: any) => Number(service.getCharacteristic("Identifier").value) === 1,
+      ),
+    ).toHaveLength(1);
   });
 
   it("adds the TW scene set for SHTW devices (excludes RGB-only ones)", () => {

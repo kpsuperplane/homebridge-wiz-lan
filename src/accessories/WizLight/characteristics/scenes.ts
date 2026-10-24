@@ -87,7 +87,7 @@ export function initScenes(
       accessory.removeService(scenesService);
     }
     accessory.services
-      .filter((service) => service.subtype != null)
+      .filter((service) => service.UUID === Service.InputSource.UUID)
       .forEach(service => accessory.removeService(service));
     return;
   }
@@ -174,7 +174,16 @@ export function initScenes(
     .on("set", turnOff);
 
   const configureInputSource = (sceneId: number, service: WizService) => {
-    const sceneName = SCENES[sceneId][0];
+    const sceneName = String(SCENES[sceneId][0]);
+    // The original implementation used the numeric scene id as the service
+    // name and the scene name as its subtype. Repair those cached services as
+    // they are encountered so HomeKit sees a meaningful input name after a
+    // restart. New services use the numeric id as their subtype, while cached
+    // services keep their old subtype so their HAP identity remains stable.
+    service.displayName = sceneName;
+    service
+      .getCharacteristic(Characteristic.Name)
+      .updateValue(sceneName);
     service
       .setCharacteristic(Characteristic.Identifier, sceneId)
       .setCharacteristic(Characteristic.ConfiguredName, sceneName)
@@ -191,13 +200,15 @@ export function initScenes(
 
   const supportedSceneIds = supportedScenesIdsForDevice(device);
   // remove any scenes that should not exist
+  const seenSceneIds = new Set<number>();
   const existingSceneIds = accessory.services
-    .filter((service) => service.subtype != null)
+    .filter((service) => service.UUID === Service.InputSource.UUID)
     .map((service) => {
       const id = Number(
         service.getCharacteristic(Characteristic.Identifier).value as number
       );
-      if (supportedSceneIds.includes(id)) {
+      if (supportedSceneIds.includes(id) && !seenSceneIds.has(id)) {
+        seenSceneIds.add(id);
         configureInputSource(id, service);
         return id;
       } else {
@@ -212,11 +223,11 @@ export function initScenes(
 
   // now add any new ones
   missingSceneIds.forEach((sceneId: number) => {
-    const sceneName = SCENES[sceneId][0] as unknown as string;
+    const sceneName = String(SCENES[sceneId][0]);
     const service = accessory.addService(
       Service.InputSource,
-      String(sceneId),
-      sceneName
+      sceneName,
+      String(sceneId)
     );
     configureInputSource(sceneId, service);
   });
