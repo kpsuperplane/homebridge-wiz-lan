@@ -3,6 +3,7 @@ Based off of kpsuperplane/homebridge-iotas
 
 ## Currently supports
 - Lightbulbs (RGB, Tunable White, Dimmer, Light Strips, LED String Lights, Light Poles)
+- SHORGB light strips (including ESP25_SHORGB_01; hardware verification pending)
 - Wiz Plugs/Outlets (ESP10_SOCKET_06, ESP25_SOCKET_01)
 
 # Installation

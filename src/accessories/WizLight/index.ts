@@ -16,7 +16,8 @@ class WizLight extends WizAccessory<Pilot> {
       "SHTW",
       "MHWRGB",
       "DHRGB",
-      "MHORGB"
+      "MHORGB",
+      "SHORGB"
     ].some((id) => device.model.includes(id)) // Bulbs and Lights
 
   }
@@ -31,7 +32,7 @@ class WizLight extends WizAccessory<Pilot> {
       return "Light Pole"
     } else if (model.includes("MHWRGB")) {
       return "LED String Lights"
-    } else if (model.includes("MHORGB")) {
+    } else if (model.includes("MHORGB") || model.includes("SHORGB")) {
       return "Light Strip"
     }
     return "Unknown Bulb";
