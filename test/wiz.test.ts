@@ -22,6 +22,7 @@ mock.module("dgram", () => ({
 }));
 
 import HomebridgeWizLan from "../src/wiz";
+import { PLUGIN_NAME, PLATFORM_NAME } from "../src/constants";
 
 const makePlatform = (config: any = {}) => {
   const api = makeFakeAPI();
@@ -108,13 +109,18 @@ describe("HomebridgeWizLan.deviceShouldBeIgnored", () => {
     ).toBe(true);
   });
 
-  it("matches MACs regardless of case or common separators", () => {
+  it.each([
+    ["AABBCCDDEEFF", "AABBCCDDEEFF"],
+    ["aa:bb:cc:dd:ee:ff", "AABBCCDDEEFF"],
+    ["aa-bb-cc-dd-ee-ff", "AABBCCDDEEFF"],
+    ["aabb.ccdd.eeff", "AABBCCDDEEFF"],
+  ])("matches MACs regardless of case or common separators (%s)", (configuredMac, discoveredMac) => {
     const { platform } = makePlatform({
-      ignoredDevices: [{ mac: "aa:bb:cc:dd:ee:ff" }],
+      ignoredDevices: [{ mac: configuredMac }],
     });
     expect(
       platform.deviceShouldBeIgnored(
-        makeDevice({ mac: "AABBCCDDEEFF", ip: "10.0.0.5" }),
+        makeDevice({ mac: discoveredMac, ip: "10.0.0.5" }),
       ),
     ).toBe(true);
   });
@@ -277,6 +283,22 @@ describe("HomebridgeWizLan.configureAccessory", () => {
     acc.context = makeDevice({ mac: "IGN_CACHED", ip: "10.0.0.17" });
     platform.configureAccessory(acc as any);
     expect(api.unregisterPlatformAccessories).toHaveBeenCalled();
+    expect(platform.accessories).not.toContain(acc);
+  });
+
+  it("unregisters cached accessories when ignored MAC case and separators differ", () => {
+    const { platform, api } = makePlatform({
+      ignoredDevices: [{ mac: "aa:bb:cc:dd:ee:ff" }],
+    });
+    const acc = new api.platformAccessory("Bulb", "uuid-ignored-normalized");
+    acc.context = makeDevice({ mac: "AABBCCDDEEFF", ip: "10.0.0.18" });
+    platform.configureAccessory(acc as any);
+
+    expect(api.unregisterPlatformAccessories).toHaveBeenCalledWith(
+      PLUGIN_NAME,
+      PLATFORM_NAME,
+      [acc],
+    );
     expect(platform.accessories).not.toContain(acc);
   });
 
