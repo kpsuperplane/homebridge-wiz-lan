@@ -32,6 +32,17 @@ describe("scenes: enableScenes=false", () => {
     ).toBeUndefined();
     expect(sceneIdsAdded(accessory)).toEqual([]);
   });
+
+  it("removes a cached invalid Active characteristic from the Lightbulb service", () => {
+    const wiz = makeFakeWiz({ enableScenes: false } as any);
+    const accessory = makeAccessoryWithService("Lightbulb");
+    const lightbulb = accessory.getService(FakeServiceCtors.Lightbulb)!;
+    lightbulb.getCharacteristic(wiz.Characteristic.Active);
+
+    initScenes(wiz, accessory as any, makeDevice({ model: "ESP01_SHRGB_03" }));
+
+    expect(lightbulb.testCharacteristic(wiz.Characteristic.Active)).toBe(false);
+  });
 });
 
 describe("scenes: enableScenes=true device filtering", () => {

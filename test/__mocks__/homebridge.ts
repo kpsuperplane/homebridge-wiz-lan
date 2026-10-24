@@ -38,6 +38,7 @@ export class FakeService extends EventEmitter {
     }
     return this.characteristics.get(key)!;
   };
+  testCharacteristic = (key: any) => this.characteristics.has(key);
   setCharacteristic = (key: any, value: any) => {
     this.getCharacteristic(key).updateValue(value);
     return this;
@@ -87,6 +88,7 @@ export const FakeCharacteristicCtors: Record<string, string> & {
     ConfiguredName: charKey("ConfiguredName"),
     IsConfigured: charKey("IsConfigured"),
     InputSourceType: charKey("InputSourceType"),
+    Name: charKey("Name"),
     Manufacturer: charKey("Manufacturer"),
     Model: charKey("Model"),
     SerialNumber: charKey("SerialNumber"),

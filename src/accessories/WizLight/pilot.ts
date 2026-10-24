@@ -287,11 +287,31 @@ export function setPilot(
   callback: (error: Error | null) => void
 ) {
   if (isOffline(device.mac)) {
+    // Even when the write is rejected by the offline fast-path, probe in the
+    // background so both power controls can recover as soon as the device
+    // answers again.
+    getPilot(
+      wiz,
+      accessory,
+      device,
+      pilot => updatePilot(wiz, accessory, device, pilot),
+      () => {},
+    );
     callback(new wiz.api.hap.HapStatusError(wiz.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE));
     return;
   }
   const oldPilot = cachedPilot[device.mac];
   if (typeof oldPilot == "undefined") {
+    // A setter can run before the first successful GET. Start a probe after
+    // reporting the write failure so the optimistic HomeKit mirror converges
+    // once the device's actual state is known.
+    getPilot(
+      wiz,
+      accessory,
+      device,
+      pilot => updatePilot(wiz, accessory, device, pilot),
+      () => {},
+    );
     callback(new Error(`No cached state for ${device.mac}`));
     return;
   }
